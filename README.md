@@ -21,10 +21,23 @@ El lanzamiento inicial está pensado para **México**, en **español**, con prec
 
 ## Estado del proyecto
 
-Actualmente el repositorio contiene la documentación inicial. Las aplicaciones todavía están por construirse y las funciones descritas son el alcance previsto de la primera versión.
+El repositorio ya contiene la base navegable del frontend web en Ionic/Vue, configuración de Capacitor y el proyecto Android. Las pantallas, rutas y stores son estructura inicial; todavía no hay backend ni operaciones conectadas a datos reales. iOS queda pendiente para una etapa posterior.
+
+### Arranque rápido del frontend
+
+Ejecuta el proyecto desde su propio directorio:
+
+```sh
+cd frontend
+npm install
+npm run dev
+```
+
+Los comandos de Android y las comprobaciones disponibles están en la [guía del frontend](frontend/README.md). El repositorio no fija versiones de Node.js ni npm ni usa npm workspaces.
 
 ## Documentación
 
 - [Idea, alcance y reglas del producto](documentation/idea_design.md).
 - [Punto de entrada para agentes](AGENTS.md).
 - [Guía técnica e instrucciones para agentes](.github/agent_instructions.md).
+- [Guía de instalación y arranque del frontend](frontend/README.md).

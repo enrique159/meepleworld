@@ -10,15 +10,15 @@ Antes de modificar el proyecto, leer:
 2. [Guía técnica](.github/agent_instructions.md): arquitectura, versiones, datos, integraciones y verificación.
 3. [README](README.md): presentación y estado general del proyecto.
 
-Inspeccionar el estado real del repositorio antes de ejecutar comandos. Actualmente la base del proyecto es documental; las aplicaciones y los scripts descritos en la guía están previstos para una implementación posterior.
+Inspeccionar el estado real del repositorio antes de ejecutar comandos. Ya existe la base del frontend web con Ionic/Vue y la plataforma Android de Capacitor; el backend y las funcionalidades conectadas a servicios reales siguen pendientes. La guía técnica distingue lo implementado de lo previsto.
 
 ## Decisiones del proyecto
 
 - Mantener el nombre **MeepleWorld** y la documentación en español.
-- Organizar el monorepo con npm workspaces, proyectos `frontend` y `backend`, TypeScript estricto y un único lockfile raíz.
+- Mantener los proyectos `frontend` y `backend` independientes, cada uno con sus dependencias y lockfile en su directorio; no usar npm workspaces ni un `package.json` en la raíz.
 - Frontend: Ionic 9, Vue 3 desde 3.5, Vue Router 5, Vite, Pinia y Capacitor 8 para web, Android e iOS.
 - Backend: NestJS 12 con ESM, TypeORM, `mysql2` y MySQL 8.4 LTS; API REST bajo `/api/v1` y Socket.IO para chat.
-- Desarrollo local con Node.js 24 LTS desde 24.15 y MySQL local, sin Docker.
+- No fijar versiones de Node.js ni npm en la raíz del repositorio; cada proyecto se ejecuta desde su propio directorio. Usar MySQL local, sin Docker.
 - Lanzamiento inicial en México, en español y con importes en MXN. Los pagos y las entregas se acuerdan entre usuarios.
 
 Las instrucciones explícitas del usuario tienen prioridad sobre estas decisiones. Cualquier cambio acordado de arquitectura o producto debe reflejarse en la documentación correspondiente.

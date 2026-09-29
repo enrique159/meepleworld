@@ -1,0 +1,24 @@
+:root {
+  --ion-color-primary: #28624f;
+  --ion-color-primary-rgb: 40, 98, 79;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #235646;
+  --ion-color-primary-tint: #3e725f;
+  --ion-color-secondary: #e6a94f;
+  --ion-color-secondary-rgb: 230, 169, 79;
+  --ion-color-secondary-contrast: #241b0d;
+  --ion-color-secondary-contrast-rgb: 36, 27, 13;
+  --ion-color-secondary-shade: #ca9546;
+  --ion-color-secondary-tint: #e9b260;
+  --ion-background-color: #f5f4ed;
+  --ion-text-color: #1e2c27;
+  --ion-font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --mw-canvas: #f5f4ed;
+  --mw-surface: #fffefa;
+  --mw-ink: #1e2c27;
+  --mw-muted: #64736d;
+  --mw-line: #e2e5dc;
+  --mw-forest: #28624f;
+  --mw-sun: #e6a94f;
+}

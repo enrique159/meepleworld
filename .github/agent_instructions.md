@@ -1,15 +1,15 @@
 # MeepleWorld: guía técnica e instrucciones para agentes
 
-Estado: arquitectura prevista, previa a la implementación. Última actualización: 29 de septiembre de 2026.
+Estado: base del frontend y Android implementada; backend y funcionalidades conectadas pendientes. Última actualización: 29 de septiembre de 2026.
 
-Esta guía define cómo construir los proyectos del monorepo. Las reglas de negocio están en [idea_design.md](../documentation/idea_design.md) y la presentación del producto en el [README](../README.md). Actualmente existen estos documentos; los proyectos, dependencias, scripts, pruebas y servicios descritos aquí todavía deben crearse.
+Esta guía define cómo construir los proyectos del monorepo. Las reglas de negocio están en [idea_design.md](../documentation/idea_design.md) y la presentación del producto en el [README](../README.md). La aplicación Ionic/Vue y el proyecto Android ya existen dentro de `frontend/`; cada proyecto mantiene sus dependencias y lockfile en su propio directorio. El backend, iOS, los servicios reales y la mayoría de las funciones de producto siguen pendientes; cada sección distingue la base implementada de lo previsto.
 
 ## 1. Decisiones técnicas
 
 | Área | Base acordada |
 | --- | --- |
-| Monorepo | npm workspaces con dos proyectos: `frontend` y `backend`; raíz privada y un único `package-lock.json`. |
-| Entorno | Node.js 24 LTS, mínimo 24.15 para el CLI de NestJS 12; npm compatible con esa versión, fijado al inicializar. |
+| Monorepo | Proyectos independientes `frontend` y `backend`; cada uno administra sus dependencias y su `package-lock.json` desde su directorio. Sin npm workspaces ni paquete raíz. |
+| Entorno | El repositorio no fija versiones de Node.js ni npm; usar versiones compatibles con las dependencias de cada proyecto. MySQL se instala localmente. |
 | Lenguaje | TypeScript con comprobaciones estrictas en ambos proyectos. |
 | Frontend | Ionic Framework 9, Vue 3 desde 3.5, Vue Router 5, Vite y Pinia. |
 | Móviles | Capacitor 8 para Android e iOS; mismo frontend para web y contenedores nativos. |
@@ -20,11 +20,11 @@ Esta guía define cómo construir los proyectos del monorepo. Las reglas de nego
 | Pruebas previstas | Vitest en ambos proyectos, Vue Test Utils para componentes, Supertest para API y Playwright para recorridos web. |
 | Desarrollo local | Node.js y MySQL instalados localmente; sin Docker ni Docker Compose. |
 
-MySQL 8.4 LTS sustituye la propuesta inicial de 8.3 por decisión del proyecto. Las versiones exactas de dependencias compatibles se fijarán al crear las aplicaciones, conservando las series acordadas y el lockfile raíz. No introducir otro gestor de paquetes, ORM o framework sin actualizar la decisión y la documentación.
+MySQL 8.4 LTS sustituye la propuesta inicial de 8.3 por decisión del proyecto. El frontend fija versiones exactas compatibles en `frontend/package.json`; `frontend/package-lock.json` hace reproducible esa instalación. La base actual usa Ionic Vue y su adaptador Vue Router 9.0.4, Vue 3.5.43, Vue Router 5.3.1, Pinia 4.0.3, Vite 8.3.1 y Capacitor 8.5.2. El repositorio no fija versiones de Node.js ni npm. No introducir otro gestor de paquetes, ORM o framework sin actualizar la decisión y la documentación.
 
 Ionic 9 requiere Vue 3.5 y Vue Router 5 en su integración Vue. NestJS 12 publica sus paquetes en ESM y su configuración de proyectos ESM utiliza Vitest. Los requisitos se respaldan en las [notas de Ionic 9](https://github.com/ionic-team/ionic-framework/blob/main/BREAKING.md) y la [guía de NestJS 12](https://docs.nestjs.com/migration-guide). Usar `type: module` y resolución `NodeNext` en el backend; respetar las extensiones de importación de su salida ESM.
 
-## 2. Organización prevista
+## 2. Organización del monorepo
 
 ```text
 meepleworld/
@@ -34,17 +34,16 @@ meepleworld/
 │   └── idea_design.md
 ├── .github/
 │   └── agent_instructions.md
-├── package.json                 # futuro: raíz privada y workspaces
-├── package-lock.json            # futuro: único lockfile
-├── frontend/                    # futuro: Ionic + Vue + Capacitor
+├── frontend/                    # Ionic + Vue + Capacitor
+│   ├── package.json
+│   ├── package-lock.json
 │   ├── src/
 │   │   ├── app/                 # arranque, router y configuración
 │   │   ├── features/            # pantallas, componentes y estado por dominio
 │   │   ├── shared/              # componentes y utilidades compartidas
 │   │   └── services/            # HTTP, Socket.IO y adaptadores de plataforma
-│   ├── android/                 # futuro: proyecto nativo Capacitor
-│   └── ios/                     # futuro: proyecto nativo Capacitor
-└── backend/                     # futuro: NestJS
+│   └── android/                 # proyecto nativo Capacitor
+└── backend/                     # futuro: NestJS, con package.json y lockfile propios
     └── src/
         ├── modules/             # módulos de negocio
         ├── common/              # filtros, guards y utilidades comunes
@@ -52,9 +51,11 @@ meepleworld/
         └── database/            # DataSource y migraciones
 ```
 
-Los workspaces se llamarán `frontend` y `backend`. Configurar los comandos desde la raíz y evitar lockfiles anidados. Los proyectos nativos de Capacitor permanecerán dentro del frontend. No crear un tercer proyecto para compartir entidades del backend: los contratos públicos deben ser independientes del ORM y del código del servidor.
+Cada proyecto se instala, ejecuta y mantiene desde su propio directorio; no crear una configuración de npm workspaces ni un paquete en la raíz. Al inicializar `backend`, darle su propio `package.json` y lockfile. Los proyectos nativos de Capacitor permanecen dentro del frontend. No crear un tercer proyecto para compartir entidades del backend: los contratos públicos deben ser independientes del ORM y del código del servidor. Android está inicializado; iOS se añadirá cuando se acuerde comenzar esa plataforma.
 
 ## 3. Frontend
+
+La base del frontend ya está implementada en `frontend/`: arranque Ionic, router con navegación de mesas/marketplace/biblioteca/perfil y acceso, layouts compartidos, stores iniciales, tema adaptable, cliente HTTP base y configuración Capacitor para Android. Las pantallas identifican como pendientes los datos y acciones que dependen del backend; no representan una funcionalidad conectada.
 
 Usar componentes Vue de archivo único con Composition API y `<script setup lang="ts">`. Agrupar funcionalidades de acceso, perfiles y biblioteca, mesas, marketplace, chat, notificaciones, reputación y administración. Separar la vista de formularios, el estado Pinia y los servicios HTTP o Socket.IO.
 
@@ -172,9 +173,9 @@ Validar imágenes por tipo real y tamaño, generar nombres propios y no ejecutar
 
 Persistir notificaciones internas después de confirmar la operación de negocio y procesar su entrega externa por separado, con un registro recuperable de entregas pendientes. Un fallo de correo o push no revertirá una asistencia confirmada. Los dispositivos tendrán registro y baja de tokens push; cerrar sesión desvinculará el dispositivo de la cuenta. Los avisos push serán genéricos y abrirán recursos solo después de comprobar permiso vigente.
 
-## 9. Configuración prevista
+## 9. Configuración
 
-Estos nombres son el contrato inicial de configuración; todavía no existen archivos `.env` ni un validador. Crear ejemplos sin secretos al inicializar cada proyecto y validar la configuración requerida al arrancar. Todo valor `VITE_*` se incluye en el cliente y debe considerarse público.
+Estos nombres son el contrato inicial de configuración. El frontend incluye `frontend/.env.example` y lee sus variables públicas; todavía no hay un validador de configuración ni ejemplos para el backend. Crear ejemplos sin secretos al inicializar cada proyecto y validar la configuración del servidor al arrancar. Todo valor `VITE_*` se incluye en el cliente y debe considerarse público.
 
 | Proyecto | Variables previstas | Uso |
 | --- | --- | --- |
@@ -193,36 +194,37 @@ Los nombres específicos de credenciales de hosting, archivos, correo y push se 
 
 Nunca versionar `.env`, credenciales push, certificados, llaves de firma móvil, contraseñas o tokens. Las URLs usadas en dispositivos físicos deberán alcanzar el equipo de desarrollo; `localhost` dentro del dispositivo no apunta al backend del equipo. Evitar copiar secretos de backend a configuración de Capacitor o Vite.
 
-## 10. Desarrollo y compilación previstos
+## 10. Desarrollo y compilación
 
-La inicialización deberá preparar Node.js 24 LTS desde 24.15, npm y MySQL 8.4 LTS local. Los valores convencionales de desarrollo serán puerto 5173 para Vite, 3000 para NestJS y 3306 para MySQL, configurables y sin depender de ellos en las reglas de negocio.
+El repositorio no fija versiones de Node.js ni npm: instalar dependencias y ejecutar scripts desde el directorio del proyecto correspondiente, respetando la compatibilidad que requieran sus herramientas. MySQL 8.4 LTS se ejecuta localmente. Los valores convencionales de desarrollo serán puerto 5173 para Vite, 3000 para NestJS y 3306 para MySQL, configurables y sin depender de ellos en las reglas de negocio.
 
 Para Android se necesitarán Android Studio 2025.2.1 o superior y SDK configurado. La base Capacitor 8 establece Android API 24 como mínimo y SDK de compilación y destino 36. Para iOS se necesitarán macOS, Xcode 26 o superior y sus herramientas de línea de comandos, con Swift Package Manager como base. MeepleWorld fijará iOS 16 como mínimo por los requisitos de Ionic 9. Ver [entorno Capacitor](https://capacitorjs.com/docs/getting-started/environment-setup), [actualización Capacitor 8](https://capacitorjs.com/docs/updating/8-0) y [soporte Ionic 9](https://github.com/ionic-team/ionic-framework/blob/main/BREAKING.md).
 
 Verificar además que los requisitos de Mapbox y los plugins elegidos sean compatibles antes de fijar definitivamente los destinos. La firma, los identificadores de aplicación y las cuentas de las tiendas están pendientes y deberán configurarse sin incluir secretos en Git.
 
-Los siguientes comandos son **previstos**. No son ejecutables en el estado documental actual; crear sus scripts y dependencias antes de anunciarlos como disponibles.
+El servidor web, las comprobaciones de tipos, la compilación web y la sincronización/apertura del proyecto Android están configurados en `frontend/`. No hay restricciones globales de versión para Node.js o npm en el repositorio. Los comandos del backend continúan previstos hasta que exista ese proyecto.
 
-| Desde la raíz | Propósito futuro |
-| --- | --- |
-| `npm install` | Instalación inicial y creación del lockfile raíz. |
-| `npm ci` | Instalación reproducible una vez que exista el lockfile. |
-| `npm run dev --workspace frontend` | Servir el frontend con Vite. |
-| `npm run start:dev --workspace backend` | Servir NestJS en modo desarrollo. |
-| `npm run migration:run --workspace backend` | Aplicar migraciones a la base configurada. |
-| `npm run migration:revert --workspace backend` | Revertir la última migración, cuando sea reversible y esté autorizado. |
-| `npm run lint --workspaces` | Comprobar estilo y problemas estáticos. |
-| `npm run typecheck --workspaces` | Comprobar tipos sin emitir salida. |
-| `npm run test --workspaces` | Ejecutar las pruebas de ambos proyectos. |
-| `npm run build --workspaces` | Generar los artefactos web y del servidor. |
-| `npm exec --workspace frontend -- cap sync android` | Sincronizar un proyecto Android ya creado, después del build frontend. |
-| `npm exec --workspace frontend -- cap sync ios` | Sincronizar un proyecto iOS ya creado, después del build frontend. |
+| Directorio | Comando | Propósito y estado |
+| --- | --- | --- |
+| `frontend/` | `npm install` | Instalar dependencias y actualizar el lockfile del frontend. |
+| `frontend/` | `npm ci` | Instalar de forma reproducible desde `frontend/package-lock.json`. |
+| `frontend/` | `npm run dev` | Servir el frontend con Vite en el puerto 5173. |
+| `frontend/` | `npm run typecheck` | Comprobar tipos del frontend con `vue-tsc`. |
+| `frontend/` | `npm run build` | Comprobar tipos y generar el frontend web en `dist/`. |
+| `frontend/` | `npm run android:sync` | Compilar la web y sincronizar sus recursos con Android. |
+| `frontend/` | `npm run android:open` | Abrir el proyecto Android en Android Studio. |
+| `backend/` | `npm run start:dev` | Futuro: servir NestJS en modo desarrollo. |
+| `backend/` | `npm run migration:run` | Futuro: aplicar migraciones a la base configurada. |
+| `backend/` | `npm run migration:revert` | Futuro: revertir la última migración, cuando sea reversible y esté autorizado. |
+| Cada proyecto | `npm run lint` | Pendiente: definir y configurar ESLint por proyecto. |
+| Cada proyecto | `npm test` | Futuro: ejecutar las pruebas cuando se implementen. |
+| `frontend/` | `npx cap sync ios` | Futuro: sincronizar iOS tras inicializar esa plataforma. |
 
-Al inicializar Capacitor, configurar `webDir` con la salida `dist` del frontend y crear Android e iOS una vez. Compilar el frontend antes de sincronizar; finalizar la compilación nativa en Android Studio o Xcode. Los directorios nativos serán parte del proyecto y sus artefactos de compilación serán generados. No presentar `cap sync` como una compilación final o una publicación en tiendas.
+Capacitor usa `webDir: dist`; Android se encuentra inicializado dentro del frontend. Compilar el frontend antes de sincronizar; finalizar la compilación nativa en Android Studio. iOS aún no está inicializado. Los directorios nativos serán parte del proyecto y sus artefactos de compilación serán generados. No presentar `cap sync` como una compilación final o una publicación en tiendas.
 
-## 11. Verificación prevista
+## 11. Verificación
 
-Las pruebas de negocio deben cubrir reglas con efecto real. No exigir pruebas que únicamente reflejen el texto de esta documentación. Para esta entrega documental basta revisar coherencia, enlaces y formato.
+Las pruebas de negocio deben cubrir reglas con efecto real. No exigir pruebas que únicamente reflejen el texto de esta documentación. La base frontend cuenta con comprobaciones de tipos y compilación; las pruebas de negocio se incorporarán junto con las funciones conectadas.
 
 - Con MySQL de pruebas y migraciones reales: competencia por el último lugar, grupos con acompañantes, aprobación parcial sin cupo, reintentos y cancelación doble. No usar SQLite como sustituto para verificar bloqueos de MySQL.
 - API y Socket.IO: permisos de autor y asistente, omisión de coordenadas privadas en todas las proyecciones públicas, revocación durante una conexión abierta y cuenta suspendida.
@@ -231,7 +233,7 @@ Las pruebas de negocio deben cubrir reglas con efecto real. No exigir pruebas qu
 - Frontend y recorridos: filtros consistentes, ciudad manual sin geolocalización, aceptación de oferta con error `409`, acceso al chat, ausencia de conexión y push denegado.
 - Sesiones: verificación, recuperación de un solo uso, renovación rotada, reutilización, cierre de sesión y autorización tras revocación.
 
-Cuando existan proyectos, ejecutar los checks pertinentes de tipos, lint, pruebas y compilación antes de entregar cambios. Para funcionalidades de plataforma, verificar también en emulador o dispositivo Android e iOS y registrar la cobertura real. No afirmar que una compilación o entrega push pasó si solo se comprobó la web.
+Para cambios web, ejecutar los checks configurados de tipos y compilación. La base actual no integra todavía endpoints, mapa, chat, push ni acciones de producto; sus stores y pantallas son estructura, no simulaciones de éxito. La compilación nativa Android y la prueba en emulador/dispositivo deben completarse en Android Studio y registrarse antes de afirmar que Android fue verificado. No afirmar que una compilación o entrega push pasó si solo se comprobó la web. iOS se verificará cuando se inicialice.
 
 ## 12. Forma de trabajo para agentes
 
