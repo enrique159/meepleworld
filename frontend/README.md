@@ -1,6 +1,6 @@
 # Frontend de MeepleWorld
 
-Base adaptable para web y Android construida con Ionic Vue, Vue Router, Pinia y Capacitor. Las rutas y pantallas iniciales ya están creadas; las consultas reales, autenticación y demás operaciones esperan al backend.
+Base adaptable para web y Android construida con Ionic Vue, Vue Router, Pinia y Capacitor. Consume los endpoints existentes de cuentas, perfiles, catálogo y biblioteca, mesas y marketplace desde `../backend`.
 
 ## Requisitos
 
@@ -17,7 +17,9 @@ cp .env.example .env
 npm run dev
 ```
 
-Vite sirve la aplicación en `http://localhost:5173`. Las peticiones `/api/v1` y `/socket.io` se redirigen al backend local en el puerto 3000 cuando esté implementado.
+Vite sirve la aplicación en `http://localhost:8080`. Las peticiones `/api/v1` se redirigen al backend local en el puerto 3000. Inicia también el backend y MySQL siguiendo `../backend/README.md` para usar formularios y datos reales. Las vistas de mapa, chat, BGG, reputación y notificaciones aún no están implementadas.
+
+El acceso web mantiene el token de acceso en memoria y usa la cookie HttpOnly de renovación del backend. Al recibir `401`, renueva una vez la sesión y reintenta la petición. En desarrollo, el registro y la recuperación escriben tokens al buzón simulado descrito en `../backend/README.md`; la pantalla de verificación permite pegarlos. La sesión en Android/iOS y el almacenamiento seguro nativo aún requieren validación e integración específica.
 
 ## Android
 
@@ -30,7 +32,7 @@ npm run android:open
 
 Compila y sincroniza después de cada cambio web. El comando genera los recursos de `dist` en Android; la compilación del APK o AAB se realiza en Android Studio.
 
-En un emulador, Android alcanza al host de desarrollo en `10.0.2.2`; para un dispositivo físico configura `VITE_API_BASE_URL` y `VITE_WS_URL` con una dirección alcanzable por el teléfono. Todo valor `VITE_*` termina incluido en el cliente y no debe contener secretos.
+En un emulador, Android alcanza al host de desarrollo en `10.0.2.2`; para un dispositivo físico configura `VITE_API_BASE_URL` con una dirección alcanzable por el teléfono y agrega su origen a `CORS_ORIGINS` del backend. Todo valor `VITE_*` termina incluido en el cliente y no debe contener secretos.
 
 ## Comprobaciones disponibles
 

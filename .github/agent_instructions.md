@@ -1,8 +1,8 @@
 # MeepleWorld: guía técnica e instrucciones para agentes
 
-Estado: base del frontend y Android implementada; backend y funcionalidades conectadas pendientes. Última actualización: 29 de septiembre de 2026.
+Estado: frontend integrado con los endpoints iniciales del backend; servicios externos, mapa, chat e iOS pendientes. Última actualización: 29 de septiembre de 2026.
 
-Esta guía define cómo construir los proyectos del monorepo. Las reglas de negocio están en [idea_design.md](../documentation/idea_design.md) y la presentación del producto en el [README](../README.md). La aplicación Ionic/Vue y el proyecto Android ya existen dentro de `frontend/`; cada proyecto mantiene sus dependencias y lockfile en su propio directorio. El backend, iOS, los servicios reales y la mayoría de las funciones de producto siguen pendientes; cada sección distingue la base implementada de lo previsto.
+Esta guía define cómo construir los proyectos del monorepo. Las reglas de negocio están en [idea_design.md](../documentation/idea_design.md) y la presentación del producto en el [README](../README.md). El frontend Ionic/Vue, Android y un backend NestJS con entidades, migración inicial y endpoints REST ya existen; cada proyecto mantiene sus dependencias y lockfile en su propio directorio. La interfaz aún no consume esos endpoints; iOS, Socket.IO, correo real, BGG y el resto de las funciones siguen pendientes.
 
 ## 1. Decisiones técnicas
 
@@ -43,19 +43,26 @@ meepleworld/
 │   │   ├── shared/              # componentes y utilidades compartidas
 │   │   └── services/            # HTTP, Socket.IO y adaptadores de plataforma
 │   └── android/                 # proyecto nativo Capacitor
-└── backend/                     # futuro: NestJS, con package.json y lockfile propios
-    └── src/
-        ├── modules/             # módulos de negocio
-        ├── common/              # filtros, guards y utilidades comunes
-        ├── config/              # configuración validada
-        └── database/            # DataSource y migraciones
+└── backend/                     # NestJS independiente
+    ├── package.json
+    ├── package-lock.json
+    ├── src/
+    │   ├── auth/                # registro, verificación, sesiones y acceso
+    │   ├── users/               # perfiles
+    │   ├── games/               # catálogo y biblioteca
+    │   ├── tables/              # mesas y participaciones
+    │   ├── marketplace/         # anuncios
+    │   └── database/            # entidades, DataSource y migraciones
+    └── .env.example
 ```
 
-Cada proyecto se instala, ejecuta y mantiene desde su propio directorio; no crear una configuración de npm workspaces ni un paquete en la raíz. Al inicializar `backend`, darle su propio `package.json` y lockfile. Los proyectos nativos de Capacitor permanecen dentro del frontend. No crear un tercer proyecto para compartir entidades del backend: los contratos públicos deben ser independientes del ORM y del código del servidor. Android está inicializado; iOS se añadirá cuando se acuerde comenzar esa plataforma.
+Cada proyecto se instala, ejecuta y mantiene desde su propio directorio; no crear una configuración de npm workspaces ni un paquete en la raíz. Los proyectos nativos de Capacitor permanecen dentro del frontend. No crear un tercer proyecto para compartir entidades del backend: los contratos públicos deben ser independientes del ORM y del código del servidor. Android está inicializado; iOS se añadirá cuando se acuerde comenzar esa plataforma.
 
 ## 3. Frontend
 
-La base del frontend ya está implementada en `frontend/`: arranque Ionic, router con navegación de mesas/marketplace/biblioteca/perfil y acceso, layouts compartidos, stores iniciales, tema adaptable, cliente HTTP base y configuración Capacitor para Android. Las pantallas identifican como pendientes los datos y acciones que dependen del backend; no representan una funcionalidad conectada.
+El frontend `frontend/` consume autenticación y sesión, perfiles, catálogo/biblioteca, descubrimiento y publicación de mesas, solicitudes y ofertas de participación, ubicación privada y anuncios del marketplace. Los formularios muestran estados de carga y errores de la API. En web, las sesiones mantienen el access token en memoria, renuevan la sesión con la cookie HttpOnly del backend al recibir `401` y reintentan una vez la petición. La sesión nativa y el almacenamiento seguro de credenciales en Android/iOS requieren validación e integración específica. La ubicación privada se pide aparte y solo se presenta después de la respuesta autorizada del servidor.
+
+El backend inicial está implementado en `backend/` con autenticación y recuperación de acceso, perfiles, catálogo/biblioteca, descubrimiento y publicación de mesas, participaciones, ubicación privada y anuncios. El contrato REST se mantiene en [openapi.yaml](../backend/openapi.yaml). El chat, Socket.IO, BGG, notificaciones, reputación, moderación y mapa siguen pendientes porque no hay contratos implementados para esas funciones.
 
 Usar componentes Vue de archivo único con Composition API y `<script setup lang="ts">`. Agrupar funcionalidades de acceso, perfiles y biblioteca, mesas, marketplace, chat, notificaciones, reputación y administración. Separar la vista de formularios, el estado Pinia y los servicios HTTP o Socket.IO.
 
@@ -70,6 +77,8 @@ La web será adaptable y los móviles respetarán zonas seguras, teclado y botó
 La primera versión no tendrá escritura offline ni promesas de sincronización posterior. Mostrar estados de carga, vacío, error y falta de conexión. Recuperar mensajes y notificaciones desde el servidor tras reconectar; no depender exclusivamente de los eventos en vivo.
 
 ## 4. Backend y contratos
+
+La API inicial usa `/api/v1`, DTOs con validación estricta y proyecciones de respuesta independientes de las entidades. Incluye autenticación con Argon2id/JWT y sesiones renovables, perfiles públicos/privados, catálogo y biblioteca, mesas con cupos y ubicación protegida, y anuncios del marketplace. El correo local es un adaptador simulado en un archivo excluido de Git; un proveedor real, Socket.IO/chat, BGG, reportes, reputación, notificaciones y cargas de imágenes aún están pendientes.
 
 Construir un monolito modular. Los módulos previstos son autenticación, usuarios, catálogo, bibliotecas, mesas y participaciones, marketplace y operaciones declaradas, conversaciones, notificaciones, reputación, moderación e integraciones. Cada módulo tendrá controladores para transporte, servicios para reglas y repositorios TypeORM para persistencia.
 
@@ -94,7 +103,7 @@ Las salas de mesa contendrán al anfitrión y titulares confirmados. Al cancelar
 
 ## 5. Modelo conceptual de datos
 
-El modelo siguiente es una base de dominio; no constituye DDL ni migraciones existentes.
+La migración inicial de `backend/` crea usuarios, sesiones y tokens de un solo uso, juegos, biblioteca, mesas, relaciones con juegos, participaciones y anuncios. El resto del modelo siguiente sigue siendo una base prevista; no implica que ya existan todas esas entidades o recorridos.
 
 | Entidad o conjunto | Relaciones y responsabilidad |
 | --- | --- |
@@ -175,7 +184,7 @@ Persistir notificaciones internas después de confirmar la operación de negocio
 
 ## 9. Configuración
 
-Estos nombres son el contrato inicial de configuración. El frontend incluye `frontend/.env.example` y lee sus variables públicas; todavía no hay un validador de configuración ni ejemplos para el backend. Crear ejemplos sin secretos al inicializar cada proyecto y validar la configuración del servidor al arrancar. Todo valor `VITE_*` se incluye en el cliente y debe considerarse público.
+Estos nombres son el contrato de configuración. El frontend incluye `frontend/.env.example`; el backend valida su configuración al iniciar y tiene `backend/.env.example`. Todo valor `VITE_*` se incluye en el cliente y debe considerarse público.
 
 | Proyecto | Variables previstas | Uso |
 | --- | --- | --- |
@@ -184,11 +193,10 @@ Estos nombres son el contrato inicial de configuración. El frontend incluye `fr
 | Frontend | `VITE_MAPBOX_PUBLIC_TOKEN` | Token público con permisos mínimos y restricciones aplicables. |
 | Backend | `NODE_ENV`, `PORT`, `APP_PUBLIC_URL`, `CORS_ORIGINS` | Entorno, puerto, enlaces de cuenta y orígenes permitidos. |
 | Backend | `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | Conexión MySQL local y entornos separados. |
-| Backend | `JWT_ACCESS_SECRET`, `ACCESS_TOKEN_TTL`, `REFRESH_TOKEN_TTL` | Firma y duración de sesiones; secreto independiente por entorno. |
+| Backend | `JWT_ACCESS_SECRET`, `ACCESS_TOKEN_TTL_SECONDS`, `REFRESH_TOKEN_TTL_DAYS` | Firma y duración de sesiones; secreto independiente por entorno. |
 | Backend | `AUTH_COOKIE_SECURE`, `AUTH_COOKIE_SAME_SITE` | Política de cookies; `Secure` obligatorio en producción. |
-| Backend | `BGG_ENABLED`, `BGG_API_TOKEN` | Habilitación y token secreto de aplicación BGG. |
-| Backend | `STORAGE_DRIVER`, `LOCAL_UPLOAD_PATH` | Selección de almacenamiento; directorio local de desarrollo. |
-| Backend | `MAIL_DRIVER`, `MAIL_FROM`, `PUSH_DRIVER` | Selección de adaptadores de correo y push. |
+| Backend | `MAIL_DRIVER`, `LOCAL_MAILBOX_PATH` | El adaptador local simulado guarda mensajes fuera del control de versiones. |
+| Backend futuro | `BGG_ENABLED`, `BGG_API_TOKEN`, `STORAGE_DRIVER`, `LOCAL_UPLOAD_PATH`, `PUSH_DRIVER` | Integraciones externas pendientes de configurar. |
 
 Los nombres específicos de credenciales de hosting, archivos, correo y push se documentarán cuando se elijan sus proveedores. Los adaptadores reales deberán rechazar configuración incompleta; solo desarrollo y pruebas permitirán adaptadores simulados. El modo BGG deshabilitado debe comunicar su indisponibilidad y conservar la biblioteca manual.
 
@@ -196,26 +204,31 @@ Nunca versionar `.env`, credenciales push, certificados, llaves de firma móvil,
 
 ## 10. Desarrollo y compilación
 
-El repositorio no fija versiones de Node.js ni npm: instalar dependencias y ejecutar scripts desde el directorio del proyecto correspondiente, respetando la compatibilidad que requieran sus herramientas. MySQL 8.4 LTS se ejecuta localmente. Los valores convencionales de desarrollo serán puerto 5173 para Vite, 3000 para NestJS y 3306 para MySQL, configurables y sin depender de ellos en las reglas de negocio.
+El repositorio no fija versiones de Node.js ni npm: instalar dependencias y ejecutar scripts desde el directorio del proyecto correspondiente, respetando la compatibilidad que requieran sus herramientas. MySQL 8.4 LTS se ejecuta localmente. Los puertos de desarrollo son 8080 para Vite, 3000 para NestJS y 3306 para MySQL; son configurables y no forman parte de las reglas de negocio.
 
 Para Android se necesitarán Android Studio 2025.2.1 o superior y SDK configurado. La base Capacitor 8 establece Android API 24 como mínimo y SDK de compilación y destino 36. Para iOS se necesitarán macOS, Xcode 26 o superior y sus herramientas de línea de comandos, con Swift Package Manager como base. MeepleWorld fijará iOS 16 como mínimo por los requisitos de Ionic 9. Ver [entorno Capacitor](https://capacitorjs.com/docs/getting-started/environment-setup), [actualización Capacitor 8](https://capacitorjs.com/docs/updating/8-0) y [soporte Ionic 9](https://github.com/ionic-team/ionic-framework/blob/main/BREAKING.md).
 
 Verificar además que los requisitos de Mapbox y los plugins elegidos sean compatibles antes de fijar definitivamente los destinos. La firma, los identificadores de aplicación y las cuentas de las tiendas están pendientes y deberán configurarse sin incluir secretos en Git.
 
-El servidor web, las comprobaciones de tipos, la compilación web y la sincronización/apertura del proyecto Android están configurados en `frontend/`. No hay restricciones globales de versión para Node.js o npm en el repositorio. Los comandos del backend continúan previstos hasta que exista ese proyecto.
+El servidor web, las comprobaciones de tipos, la compilación web y la sincronización/apertura del proyecto Android están configurados en `frontend/`. El backend también cuenta con instalación independiente, migración inicial, servidor de desarrollo y comprobación de tipos. No hay restricciones globales de versión para Node.js o npm en el repositorio.
 
 | Directorio | Comando | Propósito y estado |
 | --- | --- | --- |
 | `frontend/` | `npm install` | Instalar dependencias y actualizar el lockfile del frontend. |
 | `frontend/` | `npm ci` | Instalar de forma reproducible desde `frontend/package-lock.json`. |
-| `frontend/` | `npm run dev` | Servir el frontend con Vite en el puerto 5173. |
+| `frontend/` | `npm run dev` | Servir el frontend con Vite en el puerto 8080. |
 | `frontend/` | `npm run typecheck` | Comprobar tipos del frontend con `vue-tsc`. |
 | `frontend/` | `npm run build` | Comprobar tipos y generar el frontend web en `dist/`. |
 | `frontend/` | `npm run android:sync` | Compilar la web y sincronizar sus recursos con Android. |
 | `frontend/` | `npm run android:open` | Abrir el proyecto Android en Android Studio. |
-| `backend/` | `npm run start:dev` | Futuro: servir NestJS en modo desarrollo. |
-| `backend/` | `npm run migration:run` | Futuro: aplicar migraciones a la base configurada. |
-| `backend/` | `npm run migration:revert` | Futuro: revertir la última migración, cuando sea reversible y esté autorizado. |
+| `backend/` | `npm install` | Instalar dependencias y actualizar el lockfile del backend. |
+| `backend/` | `npm ci` | Instalar de forma reproducible desde `backend/package-lock.json`. |
+| `backend/` | `npm run start:dev` | Servir NestJS en modo desarrollo. |
+| `backend/` | `npm run typecheck` | Comprobar tipos del backend. |
+| `backend/` | `npm run migration:show` | Mostrar migraciones pendientes y aplicadas. |
+| `backend/` | `npm run migration:run` | Aplicar migraciones a la base configurada. |
+| `backend/` | `npm run migration:revert` | Revertir la última migración, cuando sea reversible y esté autorizado. |
+| `backend/` | `npm run build` | Compilar el backend. |
 | Cada proyecto | `npm run lint` | Pendiente: definir y configurar ESLint por proyecto. |
 | Cada proyecto | `npm test` | Futuro: ejecutar las pruebas cuando se implementen. |
 | `frontend/` | `npx cap sync ios` | Futuro: sincronizar iOS tras inicializar esa plataforma. |
@@ -224,7 +237,7 @@ Capacitor usa `webDir: dist`; Android se encuentra inicializado dentro del front
 
 ## 11. Verificación
 
-Las pruebas de negocio deben cubrir reglas con efecto real. No exigir pruebas que únicamente reflejen el texto de esta documentación. La base frontend cuenta con comprobaciones de tipos y compilación; las pruebas de negocio se incorporarán junto con las funciones conectadas.
+Las pruebas de negocio deben cubrir reglas con efecto real. No exigir pruebas que únicamente reflejen el texto de esta documentación. El frontend cuenta con comprobaciones de tipos y compilación; el backend cuenta con comprobación de tipos y compilación. Las suites de pruebas aún no están configuradas.
 
 - Con MySQL de pruebas y migraciones reales: competencia por el último lugar, grupos con acompañantes, aprobación parcial sin cupo, reintentos y cancelación doble. No usar SQLite como sustituto para verificar bloqueos de MySQL.
 - API y Socket.IO: permisos de autor y asistente, omisión de coordenadas privadas en todas las proyecciones públicas, revocación durante una conexión abierta y cuenta suspendida.
@@ -233,7 +246,7 @@ Las pruebas de negocio deben cubrir reglas con efecto real. No exigir pruebas qu
 - Frontend y recorridos: filtros consistentes, ciudad manual sin geolocalización, aceptación de oferta con error `409`, acceso al chat, ausencia de conexión y push denegado.
 - Sesiones: verificación, recuperación de un solo uso, renovación rotada, reutilización, cierre de sesión y autorización tras revocación.
 
-Para cambios web, ejecutar los checks configurados de tipos y compilación. La base actual no integra todavía endpoints, mapa, chat, push ni acciones de producto; sus stores y pantallas son estructura, no simulaciones de éxito. La compilación nativa Android y la prueba en emulador/dispositivo deben completarse en Android Studio y registrarse antes de afirmar que Android fue verificado. No afirmar que una compilación o entrega push pasó si solo se comprobó la web. iOS se verificará cuando se inicialice.
+Para cambios del frontend o backend, ejecutar sus checks configurados de tipos y compilación. El frontend consume los endpoints disponibles del backend para cuentas, catálogo/biblioteca, mesas, participaciones y anuncios; no integra chat, Socket.IO, BGG, notificaciones, reputación ni moderación. La compilación nativa Android y la prueba en emulador/dispositivo deben completarse en Android Studio y registrarse antes de afirmar que Android fue verificado. No afirmar que una compilación o entrega push pasó si solo se comprobó la web. iOS se verificará cuando se inicialice.
 
 ## 12. Forma de trabajo para agentes
 

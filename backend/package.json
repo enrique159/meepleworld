@@ -1,0 +1,38 @@
+{
+  "name": "meepleworld-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "start": "node dist/main.js",
+    "dev": "tsx watch src/main.ts",
+    "start:dev": "tsx watch src/main.ts",
+    "start:prod": "node dist/main.js",
+    "migration:run": "tsx ./node_modules/typeorm/cli.js migration:run -d src/database/data-source.ts",
+    "migration:revert": "tsx ./node_modules/typeorm/cli.js migration:revert -d src/database/data-source.ts",
+    "migration:show": "tsx ./node_modules/typeorm/cli.js migration:show -d src/database/data-source.ts"
+  },
+  "dependencies": {
+    "@nestjs/common": "^12.0.0",
+    "@nestjs/core": "^12.0.0",
+    "@nestjs/platform-express": "^12.0.0",
+    "argon2": "^0.43.1",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2",
+    "cookie": "^1.0.2",
+    "dotenv": "^16.4.7",
+    "jose": "^6.1.0",
+    "mysql2": "^3.14.4",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "typeorm": "^0.3.26"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^22.14.0",
+    "tsx": "^4.20.3",
+    "typescript": "^5.9.3"
+  }
+}

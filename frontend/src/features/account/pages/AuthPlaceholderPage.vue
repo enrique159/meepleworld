@@ -8,6 +8,8 @@ defineProps<{
   description: string
   linkLabel: string
   linkTo: string
+  secondaryLinkLabel?: string
+  secondaryLinkTo?: string
 }>()
 </script>
 
@@ -19,6 +21,10 @@ defineProps<{
       :description="description"
       :link-label="linkLabel"
       :link-to="linkTo"
-    />
+      :secondary-link-label="secondaryLinkLabel"
+      :secondary-link-to="secondaryLinkTo"
+    >
+      <slot />
+    </AuthLayout>
   </IonPage>
 </template>

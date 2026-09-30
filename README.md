@@ -21,7 +21,7 @@ El lanzamiento inicial está pensado para **México**, en **español**, con prec
 
 ## Estado del proyecto
 
-El repositorio ya contiene la base navegable del frontend web en Ionic/Vue, configuración de Capacitor y el proyecto Android. Las pantallas, rutas y stores son estructura inicial; todavía no hay backend ni operaciones conectadas a datos reales. iOS queda pendiente para una etapa posterior.
+El repositorio contiene el frontend Ionic/Vue con integración a los endpoints disponibles de cuentas, perfiles, catálogo/biblioteca, mesas y anuncios, además de un backend NestJS con entidades y API REST inicial. El correo real, chat, Socket.IO, BGG, notificaciones, reputación, moderación e iOS siguen pendientes.
 
 ### Arranque rápido del frontend
 
@@ -33,7 +33,7 @@ npm install
 npm run dev
 ```
 
-Los comandos de Android y las comprobaciones disponibles están en la [guía del frontend](frontend/README.md). El repositorio no fija versiones de Node.js ni npm ni usa npm workspaces.
+Los comandos de Android y las comprobaciones disponibles están en la [guía del frontend](frontend/README.md). El repositorio no fija versiones de Node.js ni npm ni usa npm workspaces. El backend se ejecuta desde `backend/`; consulta su README para configurar MySQL y arrancarlo.
 
 ## Documentación
 

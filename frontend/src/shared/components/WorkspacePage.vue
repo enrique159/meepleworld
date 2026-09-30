@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { IonButton, IonButtons, IonContent, IonHeader, IonTitle, IonToolbar } from '@ionic/vue'
 import { useConnectivityStore } from '@/features/notifications/stores/connectivity.store'
+import { useSessionStore } from '@/features/account/stores/session.store'
 
 defineProps<{
   title: string
@@ -10,6 +11,7 @@ defineProps<{
 }>()
 
 const connectivity = useConnectivityStore()
+const session = useSessionStore()
 </script>
 
 <template>
@@ -23,7 +25,10 @@ const connectivity = useConnectivityStore()
       </IonButtons>
       <IonTitle class="visually-hidden">{{ title }}</IonTitle>
       <IonButtons slot="end">
-        <IonButton router-link="/acceso/iniciar-sesion" fill="clear" class="header-login">
+        <IonButton v-if="session.isAuthenticated" fill="clear" class="header-login" @click="session.signOut">
+          Salir
+        </IonButton>
+        <IonButton v-else router-link="/acceso/iniciar-sesion" fill="clear" class="header-login">
           Entrar
         </IonButton>
       </IonButtons>

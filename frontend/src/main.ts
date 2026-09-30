@@ -3,6 +3,7 @@ import { createPinia } from 'pinia'
 import { IonicVue } from '@ionic/vue'
 import App from './App.vue'
 import router from './app/router'
+import { useSessionStore } from './features/account/stores/session.store'
 
 import '@ionic/vue/css/core.css'
 import '@ionic/vue/css/normalize.css'
@@ -18,11 +19,16 @@ import './shared/styles/theme.css'
 import './shared/styles/global.css'
 
 const app = createApp(App)
+const pinia = createPinia()
 
 app.use(IonicVue, { mode: 'md' })
-app.use(createPinia())
-app.use(router)
+app.use(pinia)
 
-router.isReady().then(() => {
+async function startApp() {
+  await useSessionStore(pinia).restoreSession()
+  app.use(router)
+  await router.isReady()
   app.mount('#app')
-})
+}
+
+void startApp()

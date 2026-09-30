@@ -1,0 +1,506 @@
+openapi: 3.1.0
+info:
+  title: MeepleWorld API
+  version: 0.1.0
+  description: Contrato REST inicial bajo /api/v1. Los dominios de chat, BGG, reputación y moderación aún no están implementados.
+servers:
+  - url: http://localhost:3000/api/v1
+security: []
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      responses:
+        '200':
+          description: API y MySQL disponibles.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, const: ok }
+                  database: { type: string, const: ready }
+                  timestamp: { type: string, format: date-time }
+  /auth/register:
+    post:
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [displayName, email, password]
+              properties:
+                displayName: { type: string, minLength: 1, maxLength: 120 }
+                email: { type: string, format: email }
+                password: { type: string, minLength: 12, maxLength: 128 }
+      responses:
+        '201': { description: Cuenta creada; debe verificarse el correo antes de iniciar sesión. }
+        '409': { $ref: '#/components/responses/ApiError' }
+  /auth/login:
+    post:
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 1 }
+      responses:
+        '200':
+          description: Token de acceso en JSON y renovación rotada en cookie HttpOnly.
+          headers:
+            Set-Cookie: { schema: { type: string } }
+        '401': { $ref: '#/components/responses/ApiError' }
+  /auth/refresh:
+    post:
+      operationId: refreshSession
+      responses:
+        '200': { description: Emite un nuevo access token y rota la cookie HttpOnly. }
+        '401': { $ref: '#/components/responses/ApiError' }
+  /auth/logout:
+    post:
+      operationId: logout
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: Sesión revocada. }
+  /auth/me:
+    get:
+      operationId: getCurrentSession
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Usuario autenticado. }
+  /auth/verify-email:
+    post:
+      operationId: verifyEmail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: { type: string }
+      responses:
+        '200': { description: Correo verificado. }
+        '401': { $ref: '#/components/responses/ApiError' }
+  /auth/verification/resend:
+    post:
+      operationId: resendVerification
+      requestBody: { $ref: '#/components/requestBodies/Email' }
+      responses:
+        '202': { description: Solicitud aceptada sin revelar si la cuenta existe. }
+  /auth/password/forgot:
+    post:
+      operationId: requestPasswordReset
+      requestBody: { $ref: '#/components/requestBodies/Email' }
+      responses:
+        '202': { description: Solicitud aceptada sin revelar si la cuenta existe. }
+  /auth/password/reset:
+    post:
+      operationId: resetPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, newPassword]
+              properties:
+                token: { type: string }
+                newPassword: { type: string, minLength: 12, maxLength: 128 }
+      responses:
+        '200': { description: Contraseña actualizada y sesiones revocadas. }
+  /users/me:
+    get:
+      operationId: getMyProfile
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Perfil privado del usuario autenticado. }
+    patch:
+      operationId: updateMyProfile
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateProfile' }
+      responses:
+        '200': { description: Perfil actualizado. }
+  /users/{id}:
+    get:
+      operationId: getPublicProfile
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Perfil público sin correo ni datos de acceso. }
+        '404': { $ref: '#/components/responses/ApiError' }
+  /games:
+    get:
+      operationId: listGames
+      parameters:
+        - { in: query, name: q, schema: { type: string } }
+        - { in: query, name: page, schema: { type: integer, minimum: 1 } }
+        - { in: query, name: pageSize, schema: { type: integer, minimum: 1, maximum: 100 } }
+      responses:
+        '200': { description: Catálogo paginado de juegos. }
+    post:
+      operationId: createGame
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateGame' }
+      responses:
+        '201': { description: Juego manual agregado al catálogo por usuario verificado. }
+  /games/{id}:
+    get:
+      operationId: getGame
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Juego del catálogo. }
+  /library:
+    get:
+      operationId: getLibrary
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Biblioteca del usuario autenticado. }
+    post:
+      operationId: addLibraryEntry
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AddLibraryEntry' }
+      responses:
+        '201': { description: Agrega un juego existente a la biblioteca. }
+  /library/{gameId}:
+    delete:
+      operationId: removeLibraryEntry
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { in: path, name: gameId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '204': { description: Juego retirado de la biblioteca. }
+  /tables:
+    get:
+      operationId: listTables
+      parameters:
+        - { in: query, name: city, schema: { type: string } }
+        - { in: query, name: q, schema: { type: string } }
+        - { in: query, name: gameId, schema: { type: string, format: uuid } }
+        - { in: query, name: startsAfter, schema: { type: string, format: date-time } }
+        - { in: query, name: startsBefore, schema: { type: string, format: date-time } }
+        - { in: query, name: availableOnly, schema: { type: boolean } }
+        - { in: query, name: page, schema: { type: integer, minimum: 1 } }
+        - { in: query, name: pageSize, schema: { type: integer, minimum: 1, maximum: 100 } }
+      responses:
+        '200': { description: Mesas publicadas futuras; los puntos privados son aproximados. }
+    post:
+      operationId: createTable
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateTable' }
+      responses:
+        '201': { description: Mesa publicada por anfitrión verificado. }
+  /tables/{id}:
+    get:
+      operationId: getTable
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Mesa pública; dirección exacta solo si su visibilidad es pública. }
+    patch:
+      operationId: updateTable
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateTable' }
+      responses:
+        '200': { description: Mesa actualizada por su anfitrión. }
+  /tables/{id}/location:
+    get:
+      operationId: getTablePrivateLocation
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Ubicación exacta del anfitrión o titular confirmado. }
+        '403': { $ref: '#/components/responses/ApiError' }
+  /tables/{id}/cancel:
+    post:
+      operationId: cancelTable
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Mesa cancelada por el anfitrión. }
+  /tables/{id}/participations:
+    get:
+      operationId: listTableParticipations
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Participaciones visibles solo para el anfitrión. }
+    post:
+      operationId: requestTableParticipation
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateParticipation' }
+      responses:
+        '201': { description: Solicitud pendiente o confirmada en mesa abierta. Las pendientes no reservan cupo. }
+  /tables/{id}/participations/{participationId}/offer:
+    post:
+      operationId: offerParticipationSeats
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+        - { in: path, name: participationId, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OfferParticipation' }
+      responses:
+        '200': { description: Confirmación completa o propuesta parcial del anfitrión. }
+  /tables/{id}/participations/{participationId}/accept:
+    post:
+      operationId: acceptPartialOffer
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+        - { in: path, name: participationId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Oferta parcial confirmada tras revalidar el cupo en transacción. }
+        '409': { $ref: '#/components/responses/ApiError' }
+  /tables/{id}/participations/{participationId}/reject:
+    post:
+      operationId: rejectParticipation
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+        - { in: path, name: participationId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Solicitud rechazada por el anfitrión. }
+  /tables/{id}/participations/{participationId}:
+    delete:
+      operationId: cancelParticipation
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+        - { in: path, name: participationId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '204': { description: Participación cancelada por su titular. }
+  /marketplace/listings:
+    get:
+      operationId: listMarketplaceListings
+      parameters:
+        - { in: query, name: kind, schema: { type: string, enum: [sale, wanted] } }
+        - { in: query, name: city, schema: { type: string } }
+        - { in: query, name: q, schema: { type: string } }
+        - { in: query, name: gameId, schema: { type: string, format: uuid } }
+        - { in: query, name: page, schema: { type: integer, minimum: 1 } }
+        - { in: query, name: pageSize, schema: { type: integer, minimum: 1, maximum: 100 } }
+      responses:
+        '200': { description: Anuncios activos paginados. }
+    post:
+      operationId: createMarketplaceListing
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateListing' }
+      responses:
+        '201': { description: Anuncio de venta o búsqueda publicado por usuario verificado. }
+  /marketplace/listings/{id}:
+    get:
+      operationId: getMarketplaceListing
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Anuncio activo. }
+    patch:
+      operationId: updateMarketplaceListing
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateListing' }
+      responses:
+        '200': { description: Anuncio actualizado por su autor. }
+  /marketplace/listings/{id}/close:
+    post:
+      operationId: closeMarketplaceListing
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CloseListing' }
+      responses:
+        '200': { description: Anuncio vendido, resuelto o cerrado por su autor. }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    UpdateProfile:
+      type: object
+      additionalProperties: false
+      properties:
+        displayName: { type: string, minLength: 1, maxLength: 120 }
+        city: { type: [string, 'null'], maxLength: 120 }
+        avatarUrl: { type: [string, 'null'], format: uri }
+    CreateGame:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 180 }
+        imageUrl: { type: [string, 'null'], format: uri }
+        minPlayers: { type: [integer, 'null'], minimum: 1, maximum: 100 }
+        maxPlayers: { type: [integer, 'null'], minimum: 1, maximum: 100 }
+        playingTimeMinutes: { type: [integer, 'null'], minimum: 1, maximum: 1000 }
+    AddLibraryEntry:
+      type: object
+      additionalProperties: false
+      required: [gameId]
+      properties:
+        gameId: { type: string, format: uuid }
+    CreateTable:
+      type: object
+      additionalProperties: false
+      required: [title, description, city, startsAt, timeZone, initialGroupSize, offeredSeats, accessMode, locationVisibility, latitude, longitude, amenities, gameIds]
+      properties:
+        title: { type: string, maxLength: 160 }
+        description: { type: string, maxLength: 5000 }
+        city: { type: string, maxLength: 120 }
+        startsAt: { type: string, format: date-time }
+        timeZone: { type: string, description: Zona IANA del encuentro. }
+        durationMinutes: { type: [integer, 'null'], minimum: 1, maximum: 1440 }
+        initialGroupSize: { type: integer, minimum: 1, maximum: 1000 }
+        offeredSeats: { type: integer, minimum: 0, maximum: 1000 }
+        accessMode: { type: string, enum: [open, approval] }
+        locationVisibility: { type: string, enum: [public, 'confirmed-only'] }
+        addressLine: { type: [string, 'null'], maxLength: 240 }
+        latitude: { type: number, minimum: -90, maximum: 90 }
+        longitude: { type: number, minimum: -180, maximum: 180 }
+        feeMxn: { type: string, pattern: '^\\d{1,8}(\\.\\d{1,2})?$' }
+        amenities: { type: array, maxItems: 24, items: { type: string } }
+        instructions: { type: [string, 'null'], maxLength: 3000 }
+        gameIds: { type: array, minItems: 1, maxItems: 20, uniqueItems: true, items: { type: string, format: uuid } }
+    UpdateTable:
+      type: object
+      additionalProperties: false
+      description: Parcial; enviar únicamente campos que cambian.
+      properties:
+        title: { type: string, minLength: 1, maxLength: 160 }
+        description: { type: string, minLength: 1, maxLength: 5000 }
+        city: { type: string, minLength: 1, maxLength: 120 }
+        startsAt: { type: string, format: date-time }
+        timeZone: { type: string, minLength: 1, maxLength: 64 }
+        durationMinutes: { type: [integer, 'null'], minimum: 1, maximum: 1440 }
+        initialGroupSize: { type: integer, minimum: 1, maximum: 1000 }
+        offeredSeats: { type: integer, minimum: 0, maximum: 1000 }
+        accessMode: { type: string, enum: [open, approval] }
+        locationVisibility: { type: string, enum: [public, 'confirmed-only'] }
+        addressLine: { type: [string, 'null'], maxLength: 240 }
+        latitude: { type: number, minimum: -90, maximum: 90 }
+        longitude: { type: number, minimum: -180, maximum: 180 }
+        feeMxn: { type: string, pattern: '^\\d{1,8}(\\.\\d{1,2})?$' }
+        amenities: { type: array, maxItems: 24, items: { type: string } }
+        instructions: { type: [string, 'null'], minLength: 1, maxLength: 3000 }
+        gameIds: { type: array, minItems: 1, maxItems: 20, uniqueItems: true, items: { type: string, format: uuid } }
+    CreateParticipation:
+      type: object
+      additionalProperties: false
+      required: [requestedSeats]
+      properties:
+        requestedSeats: { type: integer, minimum: 1, maximum: 100 }
+    OfferParticipation:
+      type: object
+      additionalProperties: false
+      required: [seats]
+      properties:
+        seats: { type: integer, minimum: 1, maximum: 100 }
+    CreateListing:
+      type: object
+      additionalProperties: false
+      required: [gameId, kind, description, city]
+      properties:
+        gameId: { type: string, format: uuid }
+        kind: { type: string, enum: [sale, wanted] }
+        description: { type: string, maxLength: 5000 }
+        city: { type: string, maxLength: 120 }
+        condition: { type: [string, 'null'], enum: [new, like-new, good, fair, poor, null] }
+        priceMxn: { type: [string, 'null'], pattern: '^\\d{1,8}(\\.\\d{1,2})?$' }
+        budgetMxn: { type: [string, 'null'], pattern: '^\\d{1,8}(\\.\\d{1,2})?$' }
+        imageUrls: { type: array, maxItems: 8, items: { type: string, format: uri } }
+    UpdateListing:
+      type: object
+      additionalProperties: false
+      description: Parcial; enviar únicamente campos que cambian.
+      properties:
+        description: { type: string, minLength: 1, maxLength: 5000 }
+        city: { type: string, minLength: 1, maxLength: 120 }
+        condition: { type: [string, 'null'], enum: [new, like-new, good, fair, poor, null] }
+        priceMxn: { type: [string, 'null'], pattern: '^\\d{1,8}(\\.\\d{1,2})?$' }
+        budgetMxn: { type: [string, 'null'], pattern: '^\\d{1,8}(\\.\\d{1,2})?$' }
+        imageUrls: { type: array, maxItems: 8, items: { type: string, format: uri } }
+    CloseListing:
+      type: object
+      additionalProperties: false
+      properties:
+        outcome: { type: string, enum: [sold, resolved, closed], default: closed }
+  requestBodies:
+    Email:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [email]
+            properties:
+              email: { type: string, format: email }
+  responses:
+    ApiError:
+      description: Error con código estable y requestId.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [code, message, requestId]
+            properties:
+              code: { type: string }
+              message: { type: string }
+              requestId: { type: string, format: uuid }

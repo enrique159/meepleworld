@@ -27,6 +27,12 @@ const router = createRouter({
           meta: { title: 'Publicar una mesa', requiresAuth: true },
         },
         {
+          path: 'mesas/:id',
+          name: 'table-detail',
+          component: () => import('@/features/tables/pages/TableDetailPage.vue'),
+          meta: { title: 'Detalle de mesa' },
+        },
+        {
           path: 'marketplace',
           name: 'marketplace',
           component: () => import('@/features/marketplace/pages/MarketplacePage.vue'),
@@ -43,6 +49,12 @@ const router = createRouter({
           name: 'profile',
           component: () => import('@/features/account/pages/ProfilePage.vue'),
           meta: { title: 'Mi perfil', requiresAuth: true },
+        },
+        {
+          path: 'personas/:id',
+          name: 'public-profile',
+          component: () => import('@/features/account/pages/PublicProfilePage.vue'),
+          meta: { title: 'Perfil público' },
         },
       ],
     },
@@ -67,6 +79,12 @@ const router = createRouter({
       name: 'recover-access',
       component: () => import('@/features/account/pages/RecoverAccessPage.vue'),
       meta: { title: 'Recuperar acceso' },
+    },
+    {
+      path: '/acceso/verificar-correo',
+      name: 'verify-email',
+      component: () => import('@/features/account/pages/VerifyEmailPage.vue'),
+      meta: { title: 'Verificar correo' },
     },
   ],
   scrollBehavior: () => ({ top: 0 }),
