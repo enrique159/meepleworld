@@ -1,6 +1,6 @@
 # Backend de MeepleWorld
 
-API inicial construida con NestJS 12, TypeORM y MySQL. El frontend consume las rutas disponibles de cuentas, perfiles, catálogo/biblioteca, mesas y anuncios. Chat, Socket.IO, BGG, reputación, moderación y proveedores de correo/push reales siguen pendientes.
+API inicial construida con NestJS 12, TypeORM y MySQL. Las rutas de cuentas, perfiles, catálogo/biblioteca, mesas y anuncios están disponibles; el nuevo frontend Flutter permanece vacío y su integración está pendiente. Chat, Socket.IO, BGG, reputación, moderación y proveedores de correo/push reales siguen pendientes.
 
 ## Preparar MySQL
 
@@ -28,11 +28,11 @@ npm run migration:run
 npm run start:dev
 ```
 
-La API queda en `http://localhost:3000/api/v1`; el health check es `GET /api/v1/health`. La interfaz web corre en `http://localhost:8080` y Vite redirige `/api/v1` al backend.
+La API queda en `http://localhost:3000/api/v1`; el health check es `GET /api/v1/health`. El frontend Flutter aún no consume la API y no hay servidor web del frontend.
 
 El usuario debe confirmar el correo antes de iniciar sesión. En desarrollo, abre el buzón local con `cat .local/mailbox.jsonl` y envía el token mediante `POST /api/v1/auth/verify-email`. Los mensajes de recuperación usan el mismo archivo. El archivo contiene tokens activos y está excluido de Git.
 
-`MAIL_DRIVER=filesystem` es una simulación local: los mensajes con enlaces de verificación y recuperación se escriben en `backend/.local/mailbox.jsonl`, excluido de Git. No es un proveedor de correo ni debe habilitarse en producción. Para Android o un dispositivo físico configura `VITE_API_BASE_URL` con una URL alcanzable desde el dispositivo y agrega ese origen a `CORS_ORIGINS`.
+`MAIL_DRIVER=filesystem` es una simulación local: los mensajes con enlaces de verificación y recuperación se escriben en `backend/.local/mailbox.jsonl`, excluido de Git. No es un proveedor de correo ni debe habilitarse en producción. Al integrar Flutter, la URL de la API deberá ser alcanzable desde el dispositivo Android físico, mediante la red local o una redirección de puerto ADB configurada explícitamente para desarrollo. La configuración del cliente y los enlaces de verificación/recuperación para móviles siguen pendientes.
 
 ## Endpoints iniciales
 
@@ -45,7 +45,7 @@ El usuario debe confirmar el correo antes de iniciar sesión. En desarrollo, abr
 - `POST /api/v1/tables/:id/participations`, `GET /api/v1/tables/:id/participations`, `POST /api/v1/tables/:id/participations/:participationId/offer`, `/accept`, `/reject`, `DELETE /api/v1/tables/:id/participations/:participationId`
 - `GET /api/v1/marketplace/listings`, `GET /api/v1/marketplace/listings/:id`, `POST /api/v1/marketplace/listings`, `PATCH /api/v1/marketplace/listings/:id`, `POST /api/v1/marketplace/listings/:id/close`
 
-Las rutas de escritura requieren bearer access token y correo verificado. La renovación usa cookie HttpOnly rotada, integrada en la sesión web del frontend; el cliente nativo todavía debe validarse con almacenamiento seguro. Errores REST responden `{ code, message, requestId }`.
+Las rutas de escritura requieren bearer access token y correo verificado. La renovación actual usa una cookie HttpOnly rotada; la adaptación del contrato y el almacenamiento seguro para el cliente Flutter están pendientes. Errores REST responden `{ code, message, requestId }`.
 
 El contrato OpenAPI está en [openapi.yaml](openapi.yaml).
 

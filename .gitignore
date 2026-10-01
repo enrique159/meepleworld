@@ -4,11 +4,6 @@ dist/
 .env
 .env.*
 !.env.example
-frontend/android/.gradle/
-frontend/android/local.properties
-frontend/android/build/
-frontend/android/app/build/
-frontend/android/capacitor-cordova-android-plugins/build/
 backend/.local/
 backend/dist/
 *.keystore

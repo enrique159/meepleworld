@@ -1,46 +1,65 @@
 # Frontend de MeepleWorld
 
-Base adaptable para web y Android construida con Ionic Vue, Vue Router, Pinia y Capacitor. Consume los endpoints existentes de cuentas, perfiles, catálogo y biblioteca, mesas y marketplace desde `../backend`.
+Proyecto Flutter vacío, exclusivamente para Android e iOS. La aplicación muestra una superficie blanca sin texto, controles, navegación ni integración con el backend. La identidad visual, componentes, estilos, temas y animaciones se definirán cuando el responsable termine el diseño.
 
-## Requisitos
+La base se creó con Flutter 3.47.5 del canal estable y Dart 3.13.4. Las dependencias y su resolución se mantienen en `pubspec.yaml` y `pubspec.lock`; este directorio no utiliza npm. Los iconos y recursos nativos generados por Flutter son provisionales.
 
-- El repositorio no fija versiones de Node.js ni npm. Usa versiones compatibles con las dependencias instaladas en este proyecto.
-- Para Android: Android Studio 2025.2.1 o superior, Android SDK Platform 36, Platform Tools y JDK 21.
+## Herramientas
 
-## Instalar y ejecutar la web
+- Flutter del canal estable, con su SDK de Dart incluido. Consulta la [instalación oficial](https://docs.flutter.dev/install/manual).
+- Android Studio, JDK compatible y Android SDK. Esta base usa API 24 como mínimo, API 36 para compilación/destino y NDK 28.2.13676358, según los valores de Flutter 3.47.5.
+- Para iOS: macOS, Xcode completo, sus herramientas/licencias configuradas y un simulador o dispositivo. La plantilla declara iOS 15 como mínimo. CocoaPods permite incorporar plugins que lo requieran.
 
-Desde este directorio (`frontend/`):
-
-```sh
-npm install
-cp .env.example .env
-npm run dev
-```
-
-Vite sirve la aplicación en `http://localhost:8080`. Las peticiones `/api/v1` se redirigen al backend local en el puerto 3000. Inicia también el backend y MySQL siguiendo `../backend/README.md` para usar formularios y datos reales. Las vistas de mapa, chat, BGG, reputación y notificaciones aún no están implementadas.
-
-El acceso web mantiene el token de acceso en memoria y usa la cookie HttpOnly de renovación del backend. Al recibir `401`, renueva una vez la sesión y reintenta la petición. En desarrollo, el registro y la recuperación escriben tokens al buzón simulado descrito en `../backend/README.md`; la pantalla de verificación permite pegarlos. La sesión en Android/iOS y el almacenamiento seguro nativo aún requieren validación e integración específica.
-
-## Android
-
-El proyecto nativo está en `android/`. Desde `frontend/`, sincroniza la versión web y abre el proyecto con Android Studio:
+Comprueba el entorno:
 
 ```sh
-npm run android:sync
-npm run android:open
+flutter doctor -v
 ```
 
-Compila y sincroniza después de cada cambio web. El comando genera los recursos de `dist` en Android; la compilación del APK o AAB se realiza en Android Studio.
+En la instalación local del 1 de octubre de 2026 se instalaron Flutter/Dart, Android Studio, Android Command-line Tools, SDK Platform 36, Build-Tools 36.0.0, Platform-Tools, NDK 28.2.13676358 y CMake 3.22.1. Java 21 y CocoaPods 1.16.2 ya estaban disponibles; Flutter utiliza el JDK incluido en Android Studio para compilar. Flutter está en `/opt/homebrew/share/flutter` y el SDK Android en `/Users/enrique/Library/Android/sdk`; estas rutas describen esa computadora y no deben copiarse a configuración versionada.
 
-En un emulador, Android alcanza al host de desarrollo en `10.0.2.2`; para un dispositivo físico configura `VITE_API_BASE_URL` con una dirección alcanzable por el teléfono y agrega su origen a `CORS_ORIGINS` del backend. Todo valor `VITE_*` termina incluido en el cliente y no debe contener secretos.
+Android se desarrolla y verifica en un dispositivo físico conectado por USB; no se utilizan emuladores Android. Activa las opciones de desarrollador y la depuración USB en el teléfono, conéctalo con un cable de datos y acepta su solicitud de autorización para esta computadora cuando aparezca.
 
-## Comprobaciones disponibles
+Xcode completo sigue pendiente. Para habilitar iOS, instala [Xcode desde App Store](https://apps.apple.com/app/xcode/id497799835), configura sus herramientas y completa las licencias/componentes siguiendo la [guía de Flutter para iOS](https://docs.flutter.dev/platform-integration/ios/setup). Los archivos `ios/` están generados, pero no se ha verificado una compilación iOS. Los avisos de `flutter doctor` sobre Chrome o escritorio no corresponden a los destinos de este proyecto.
+
+## Ejecutar
+
+Desde `frontend/`:
 
 ```sh
-npm run typecheck
-npm run build
+flutter pub get
+flutter devices
+flutter run -d <id-del-dispositivo>
 ```
 
-Ejecuta también estos comandos desde `frontend/`.
+Selecciona el dispositivo Android físico o un destino iOS disponible. Para comprobar la conexión USB de Android:
 
-La selección de iOS y los plugins móviles de ubicación, almacenamiento seguro y notificaciones push quedan para una etapa posterior.
+```sh
+adb devices -l
+```
+
+Abre este directorio como proyecto Flutter en un editor con soporte Dart/Flutter. La solicitud para instalar los plugins Dart/Flutter en Android Studio fue rechazada y su instalación queda pendiente. Se administran desde Settings → Plugins; consulta la [guía del editor](https://docs.flutter.dev/tools/android-studio). La CLI de Flutter está disponible para trabajar desde la terminal.
+
+## Comprobar y compilar
+
+```sh
+dart format --output=none --set-exit-if-changed lib
+flutter analyze
+flutter build apk --debug
+```
+
+El APK de desarrollo se genera en `build/app/outputs/flutter-apk/app-debug.apk`. La plantilla Android usa firma de depuración; la firma y publicación en tiendas siguen pendientes.
+
+Con Xcode y el soporte de simulador configurados:
+
+```sh
+flutter build ios --simulator
+```
+
+No hay suite Dart de pruebas ni funcionalidades de producto. Las pruebas se incorporarán cuando exista comportamiento que verificar. Verificación local del 1 de octubre de 2026: formato y `flutter analyze` pasaron; `flutter build apk --debug` generó el APK y `flutter doctor -v` confirmó las herramientas Android y sus licencias. La app se compiló, instaló y ejecutó mediante `flutter run` en un Pixel 8a físico con Android 17 (API 37), autorizado por USB. Tras volver a abrirla, ADB confirmó su proceso activo y `MainActivity` en primer plano. La compilación iOS sigue pendiente.
+
+## Backend e integraciones pendientes
+
+La API existente conserva sus endpoints y contrato en [backend/openapi.yaml](../backend/openapi.yaml); el frontend todavía no los consume. No es necesario iniciar el backend para ejecutar esta base vacía.
+
+Al implementar el cliente, habrá que definir la URL de API, adaptar la renovación de sesiones al almacenamiento seguro móvil e integrar las funcionalidades acordadas. El teléfono físico necesita una dirección del backend alcanzable desde el dispositivo o una redirección de puerto ADB configurada explícitamente durante el desarrollo. Ningún secreto de backend debe incorporarse a la aplicación.

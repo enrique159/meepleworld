@@ -1,6 +1,6 @@
 # MeepleWorld: idea y diseño del producto
 
-Estado: definición inicial, previa a la implementación. Última actualización: 29 de septiembre de 2026.
+Estado: definición de producto; backend inicial implementado y frontend Flutter vacío. Última actualización: 1 de octubre de 2026.
 
 Este documento es la referencia de producto para la primera versión. La arquitectura prevista y las instrucciones de desarrollo están en la [guía técnica](../.github/agent_instructions.md); la presentación general está en el [README](../README.md).
 
@@ -10,7 +10,7 @@ MeepleWorld busca convertir el interés por los juegos de mesa en oportunidades 
 
 El público inicial incluye aficionados que necesitan completar un grupo, personas que quieren socializar, quienes desean conocer nuevos juegos y coleccionistas que compran o venden juegos de mesa.
 
-El lanzamiento se enfocará en ciudades de México, con interfaz en español y cantidades en pesos mexicanos (MXN). Habrá una aplicación web adaptable a computadoras y móviles, y aplicaciones para Android e iOS. La primera versión requerirá conexión para consultar datos actualizados y realizar acciones.
+El lanzamiento se enfocará en ciudades de México, con interfaz en español y cantidades en pesos mexicanos (MXN). Habrá aplicaciones móviles para Android e iOS desarrolladas con Flutter. La web queda fuera del alcance. La primera versión requerirá conexión para consultar datos actualizados y realizar acciones.
 
 La utilidad principal será conseguir encuentros y conexiones entre jugadores. Las publicaciones generales de una red social y las relaciones de amistad serán ampliaciones futuras.
 
@@ -211,6 +211,6 @@ Si antes de aceptar otra participación ocupa uno de los lugares, la aceptación
 
 Las etapas siguientes podrán incorporar publicaciones sociales, amistades, comentarios públicos, lista de espera, sincronización automática con BGG, pagos integrados y expansión a otros países o idiomas. Estas funciones no forman parte de la primera versión y requerirán una definición propia antes de implementarse.
 
-Quedan pendientes los proveedores de hosting, almacenamiento de imágenes, correo y push; las credenciales externas; la aprobación de BGG; la identidad visual y las fechas de lanzamiento. La primera versión documentada incluye esas integraciones donde corresponden, aunque aún no estén disponibles sus servicios.
+Quedan pendientes los proveedores de hosting del backend, almacenamiento de imágenes, correo y push; las credenciales externas; la aprobación de BGG; la identidad visual y las fechas de lanzamiento. El responsable está preparando la identidad visual y las pantallas; hasta que termine, el frontend permanecerá vacío, sin definir componentes, estilos, temas ni animaciones de producto. La primera versión documentada incluye esas integraciones donde corresponden, aunque aún no estén disponibles sus servicios.
 
 Como indicadores iniciales de utilidad se propone observar mesas publicadas, solicitudes que terminan confirmadas, mesas finalizadas, operaciones declaradas por ambas partes y recurrencia de usuarios. No se fijan metas numéricas hasta contar con datos de uso.

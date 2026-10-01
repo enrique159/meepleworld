@@ -17,11 +17,13 @@ Los pagos y las entregas se acordarán directamente entre usuarios. El anfitrió
 
 ## Disponibilidad prevista
 
-El lanzamiento inicial está pensado para **México**, en **español**, con precios en **pesos mexicanos (MXN)**. MeepleWorld tendrá una aplicación web y aplicaciones para Android e iOS.
+El lanzamiento inicial está pensado para **México**, en **español**, con precios en **pesos mexicanos (MXN)**. MeepleWorld tendrá aplicaciones móviles para Android e iOS desarrolladas con Flutter. La web queda fuera del alcance.
 
 ## Estado del proyecto
 
-El repositorio contiene el frontend Ionic/Vue con integración a los endpoints disponibles de cuentas, perfiles, catálogo/biblioteca, mesas y anuncios, además de un backend NestJS con entidades y API REST inicial. El correo real, chat, Socket.IO, BGG, notificaciones, reputación, moderación e iOS siguen pendientes.
+El repositorio contiene un proyecto Flutter vacío en `frontend/`, con plataformas Android e iOS, y un backend NestJS con entidades y API REST inicial para cuentas, perfiles, catálogo/biblioteca, mesas y anuncios. La integración del cliente móvil con esa API está pendiente.
+
+La identidad visual y las pantallas están en preparación por el responsable del producto. Por ahora la aplicación muestra una superficie vacía; los componentes, estilos, temas y animaciones se definirán después. El correo real, mapa, chat, Socket.IO, BGG, notificaciones, reputación y moderación siguen pendientes.
 
 ### Arranque rápido del frontend
 
@@ -29,11 +31,12 @@ Ejecuta el proyecto desde su propio directorio:
 
 ```sh
 cd frontend
-npm install
-npm run dev
+flutter pub get
+flutter devices
+flutter run -d <id-del-dispositivo>
 ```
 
-Los comandos de Android y las comprobaciones disponibles están en la [guía del frontend](frontend/README.md). El repositorio no fija versiones de Node.js ni npm ni usa npm workspaces. El backend se ejecuta desde `backend/`; consulta su README para configurar MySQL y arrancarlo.
+Los requisitos de Android/iOS y las comprobaciones disponibles están en la [guía del frontend](frontend/README.md). El frontend usa Flutter/Dart y el backend usa Node.js/npm; cada uno mantiene sus dependencias y lockfile. El repositorio no fija versiones de Node.js ni npm ni usa npm workspaces. El backend se ejecuta desde `backend/`; consulta su [README](backend/README.md) para configurar MySQL y arrancarlo.
 
 ## Documentación
 

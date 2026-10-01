@@ -1,28 +1,28 @@
 # MeepleWorld: guía técnica e instrucciones para agentes
 
-Estado: frontend integrado con los endpoints iniciales del backend; servicios externos, mapa, chat e iOS pendientes. Última actualización: 29 de septiembre de 2026.
+Estado: frontend Flutter vacío para Android e iOS; backend REST inicial implementado. Última actualización: 1 de octubre de 2026.
 
-Esta guía define cómo construir los proyectos del monorepo. Las reglas de negocio están en [idea_design.md](../documentation/idea_design.md) y la presentación del producto en el [README](../README.md). El frontend Ionic/Vue, Android y un backend NestJS con entidades, migración inicial y endpoints REST ya existen; cada proyecto mantiene sus dependencias y lockfile en su propio directorio. La interfaz aún no consume esos endpoints; iOS, Socket.IO, correo real, BGG y el resto de las funciones siguen pendientes.
+Esta guía define cómo construir los proyectos del monorepo. Las reglas de negocio están en [idea_design.md](../documentation/idea_design.md) y la presentación del producto en el [README](../README.md). El frontend anterior se sustituyó por un proyecto Flutter vacío con Android e iOS. El backend NestJS conserva sus entidades, migración inicial y endpoints REST. Cada proyecto mantiene sus dependencias y lockfile en su propio directorio. La integración móvil, Socket.IO, correo real, BGG, mapa y el resto de las funciones siguen pendientes.
 
 ## 1. Decisiones técnicas
 
 | Área | Base acordada |
 | --- | --- |
-| Monorepo | Proyectos independientes `frontend` y `backend`; cada uno administra sus dependencias y su `package-lock.json` desde su directorio. Sin npm workspaces ni paquete raíz. |
-| Entorno | El repositorio no fija versiones de Node.js ni npm; usar versiones compatibles con las dependencias de cada proyecto. MySQL se instala localmente. |
-| Lenguaje | TypeScript con comprobaciones estrictas en ambos proyectos. |
-| Frontend | Ionic Framework 9, Vue 3 desde 3.5, Vue Router 5, Vite y Pinia. |
-| Móviles | Capacitor 8 para Android e iOS; mismo frontend para web y contenedores nativos. |
+| Monorepo | Proyectos independientes `frontend` y `backend`; Flutter usa `pubspec.yaml`/`pubspec.lock` y NestJS usa `package.json`/`package-lock.json`. Sin npm workspaces ni paquete raíz. |
+| Entorno | Flutter del canal estable; el requisito de Dart se declara en `frontend/pubspec.yaml`. El repositorio no fija versiones de Node.js ni npm. MySQL se instala localmente. |
+| Lenguaje | Dart en el frontend y TypeScript con comprobaciones estrictas en el backend. |
+| Frontend | Flutter; proyecto vacío pendiente de identidad visual, pantallas e integración. |
+| Móviles | Android e iOS. La web y las aplicaciones de escritorio quedan fuera del alcance. |
 | Mapas | Mapbox para mapa y visualización de mesas; listado como vista complementaria. |
 | Backend | NestJS 12 con ESM y adaptador HTTP Express. |
 | Persistencia | MySQL 8.4 LTS, TypeORM, `@nestjs/typeorm` y controlador `mysql2`. |
 | Contratos | API REST bajo `/api/v1`, documentada con OpenAPI; Socket.IO para chat. |
-| Pruebas previstas | Vitest en ambos proyectos, Vue Test Utils para componentes, Supertest para API y Playwright para recorridos web. |
-| Desarrollo local | Node.js y MySQL instalados localmente; sin Docker ni Docker Compose. |
+| Pruebas previstas | `flutter_test` e `integration_test` para el cliente cuando se implementen funcionalidades; Vitest y Supertest para el backend. |
+| Desarrollo local | Flutter/Dart, herramientas Android/iOS, dispositivo Android físico por USB, Node.js y MySQL instalados localmente; sin Docker ni Docker Compose. |
 
-MySQL 8.4 LTS sustituye la propuesta inicial de 8.3 por decisión del proyecto. El frontend fija versiones exactas compatibles en `frontend/package.json`; `frontend/package-lock.json` hace reproducible esa instalación. La base actual usa Ionic Vue y su adaptador Vue Router 9.0.4, Vue 3.5.43, Vue Router 5.3.1, Pinia 4.0.3, Vite 8.3.1 y Capacitor 8.5.2. El repositorio no fija versiones de Node.js ni npm. No introducir otro gestor de paquetes, ORM o framework sin actualizar la decisión y la documentación.
+MySQL 8.4 LTS sustituye la propuesta inicial de 8.3 por decisión del proyecto. El frontend mantiene `pubspec.lock` versionado y utiliza las herramientas incluidas en Flutter. Todavía no se han elegido paquetes de estado, navegación ni integraciones. No incorporarlos ni definir componentes, estilos, temas o animaciones de producto antes de que el responsable termine la identidad visual y las pantallas. El repositorio no fija versiones de Node.js ni npm. No introducir otro gestor de paquetes, ORM o framework sin actualizar la decisión y la documentación.
 
-Ionic 9 requiere Vue 3.5 y Vue Router 5 en su integración Vue. NestJS 12 publica sus paquetes en ESM y su configuración de proyectos ESM utiliza Vitest. Los requisitos se respaldan en las [notas de Ionic 9](https://github.com/ionic-team/ionic-framework/blob/main/BREAKING.md) y la [guía de NestJS 12](https://docs.nestjs.com/migration-guide). Usar `type: module` y resolución `NodeNext` en el backend; respetar las extensiones de importación de su salida ESM.
+NestJS 12 publica sus paquetes en ESM y su configuración de proyectos ESM utiliza Vitest; consultar la [guía de NestJS 12](https://docs.nestjs.com/migration-guide). Usar `type: module` y resolución `NodeNext` en el backend; respetar las extensiones de importación de su salida ESM.
 
 ## 2. Organización del monorepo
 
@@ -34,15 +34,14 @@ meepleworld/
 │   └── idea_design.md
 ├── .github/
 │   └── agent_instructions.md
-├── frontend/                    # Ionic + Vue + Capacitor
-│   ├── package.json
-│   ├── package-lock.json
-│   ├── src/
-│   │   ├── app/                 # arranque, router y configuración
-│   │   ├── features/            # pantallas, componentes y estado por dominio
-│   │   ├── shared/              # componentes y utilidades compartidas
-│   │   └── services/            # HTTP, Socket.IO y adaptadores de plataforma
-│   └── android/                 # proyecto nativo Capacitor
+├── frontend/                    # Flutter vacío, solo móvil
+│   ├── pubspec.yaml
+│   ├── pubspec.lock
+│   ├── analysis_options.yaml
+│   ├── lib/
+│   │   └── main.dart            # arranque y superficie vacía
+│   ├── android/                 # proyecto Android generado por Flutter
+│   └── ios/                     # proyecto iOS generado por Flutter
 └── backend/                     # NestJS independiente
     ├── package.json
     ├── package-lock.json
@@ -56,23 +55,23 @@ meepleworld/
     └── .env.example
 ```
 
-Cada proyecto se instala, ejecuta y mantiene desde su propio directorio; no crear una configuración de npm workspaces ni un paquete en la raíz. Los proyectos nativos de Capacitor permanecen dentro del frontend. No crear un tercer proyecto para compartir entidades del backend: los contratos públicos deben ser independientes del ORM y del código del servidor. Android está inicializado; iOS se añadirá cuando se acuerde comenzar esa plataforma.
+Cada proyecto se instala, ejecuta y mantiene desde su propio directorio; no crear una configuración de npm workspaces ni un paquete en la raíz. Los proyectos nativos de Flutter permanecen dentro del frontend. No crear un tercer proyecto para compartir entidades del backend: los contratos públicos deben ser independientes del ORM y del código del servidor. Android e iOS están generados; su compilación y ejecución requieren las herramientas de cada plataforma. El identificador de aplicación de desarrollo es `com.meepleworld.app`; firma y publicación en tiendas están pendientes.
 
 ## 3. Frontend
 
-El frontend `frontend/` consume autenticación y sesión, perfiles, catálogo/biblioteca, descubrimiento y publicación de mesas, solicitudes y ofertas de participación, ubicación privada y anuncios del marketplace. Los formularios muestran estados de carga y errores de la API. En web, las sesiones mantienen el access token en memoria, renuevan la sesión con la cookie HttpOnly del backend al recibir `401` y reintentan una vez la petición. La sesión nativa y el almacenamiento seguro de credenciales en Android/iOS requieren validación e integración específica. La ubicación privada se pide aparte y solo se presenta después de la respuesta autorizada del servidor.
+El frontend `frontend/` arranca una superficie vacía con el nombre MeepleWorld. No contiene pantallas de producto, navegación, estado de negocio, servicios HTTP, temas personalizados ni integraciones. La identidad visual y el diseño de pantallas los prepara el responsable; mantener esta base vacía hasta recibir ese diseño y autorización para implementarlo.
 
 El backend inicial está implementado en `backend/` con autenticación y recuperación de acceso, perfiles, catálogo/biblioteca, descubrimiento y publicación de mesas, participaciones, ubicación privada y anuncios. El contrato REST se mantiene en [openapi.yaml](../backend/openapi.yaml). El chat, Socket.IO, BGG, notificaciones, reputación, moderación y mapa siguen pendientes porque no hay contratos implementados para esas funciones.
 
-Usar componentes Vue de archivo único con Composition API y `<script setup lang="ts">`. Agrupar funcionalidades de acceso, perfiles y biblioteca, mesas, marketplace, chat, notificaciones, reputación y administración. Separar la vista de formularios, el estado Pinia y los servicios HTTP o Socket.IO.
+Al comenzar la implementación móvil, separar presentación, estado y acceso a servicios; elegir entonces las dependencias necesarias. Consumir los contratos públicos de la API mediante modelos Dart independientes del ORM. La autenticación móvil y el almacenamiento seguro de credenciales siguen pendientes.
 
-Usar componentes Ionic y su integración de router, incluyendo `IonRouterOutlet`, para conservar navegación y ciclo de vida móvil. Considerar que Ionic puede conservar páginas montadas: actualizar datos al entrar cuando proceda, detener listeners al salir y eliminar suscripciones al cerrar sesión. Los guards de navegación devuelven resultados y no usan el patrón obsoleto `next()`.
+Al implementar conexiones y notificaciones, considerar el ciclo de vida móvil: detener listeners al salir, eliminar suscripciones al cerrar sesión y recuperar datos autorizados al reconectar o volver del segundo plano. El transporte en vivo complementará el historial del servidor.
 
-El servidor será la autoridad para cupo, permisos, precios publicados y estados. No calcular confirmaciones definitivas únicamente en Pinia ni mostrar éxito antes de la respuesta. Ante un conflicto, refrescar disponibilidad y explicar la acción necesaria. Evitar duplicar solicitudes mediante botones deshabilitados mientras una operación está en curso y control de reintentos.
+El servidor será la autoridad para cupo, permisos, precios publicados y estados. No calcular confirmaciones definitivas únicamente en el estado del cliente ni mostrar éxito antes de la respuesta. Ante un conflicto, refrescar disponibilidad y explicar la acción necesaria. Evitar duplicar solicitudes mediante botones deshabilitados mientras una operación está en curso y control de reintentos.
 
-El mapa y el listado compartirán filtros y datos de consulta. Mapbox recibirá únicamente la ubicación permitida por la respuesta del backend. Una mesa privada utilizará el punto aproximado público hasta que el servidor autorice datos exactos. Pedir geolocalización en contexto mediante Capacitor en móviles y las APIs del navegador en web; ofrecer siempre selección de ciudad.
+El mapa y el listado compartirán filtros y datos de consulta. Mapbox recibirá únicamente la ubicación permitida por la respuesta del backend. Una mesa privada utilizará el punto aproximado público hasta que el servidor autorice datos exactos. Pedir geolocalización en contexto mediante un adaptador móvil compatible con Flutter; ofrecer siempre selección de ciudad. Los paquetes de mapa y geolocalización aún no están incorporados.
 
-La web será adaptable y los móviles respetarán zonas seguras, teclado y botón de retroceso. Formularios y estados deben ser accesibles por teclado, tener etiquetas y describir errores. Mostrar fechas en la zona horaria de la mesa, identificarla cuando difiera de la del usuario y formatear dinero como MXN.
+Las aplicaciones móviles respetarán zonas seguras, teclado, navegación de regreso y accesibilidad de Android/iOS. Los formularios y estados tendrán etiquetas semánticas y errores comprensibles. Mostrar fechas en la zona horaria de la mesa, identificarla cuando difiera de la del usuario y formatear dinero como MXN. La adaptación visual se definirá con el diseño del responsable.
 
 La primera versión no tendrá escritura offline ni promesas de sincronización posterior. Mostrar estados de carga, vacío, error y falta de conexión. Recuperar mensajes y notificaciones desde el servidor tras reconectar; no depender exclusivamente de los eventos en vivo.
 
@@ -158,9 +157,9 @@ Usar Argon2id para contraseñas. La API emitirá tokens de acceso de corta durac
 
 Guardar únicamente el hash del token de renovación en el servidor. Rotar al renovar, detectar reutilización y revocar la sesión comprometida. Cerrar sesión elimina la renovación; recuperación de contraseña y suspensión revocan sesiones. Proteger operaciones también con el estado vigente de la cuenta, sin depender solo del contenido de un JWT todavía válido.
 
-En web, mantener el acceso en memoria y la renovación en cookie HttpOnly, Secure en producción y con alcance limitado. Configurar SameSite de acuerdo con los dominios del despliegue: `Lax` cuando sean del mismo sitio; un despliegue entre sitios requerirá `None`, HTTPS y protección CSRF explícita. Usar CORS con lista de orígenes permitidos y credenciales solo donde corresponda.
+La API inicial entrega la renovación mediante una cookie HttpOnly, Secure en producción y con alcance limitado. Mantener esa protección mientras exista el transporte de cookies, incluyendo SameSite, CORS y protección CSRF según el despliegue. La adaptación del contrato al cliente móvil sigue pendiente; el frontend vacío no implementa sesiones.
 
-En móviles, guardar la renovación mediante un adaptador de almacenamiento seguro basado en Keychain/Keystore; no usar localStorage ni Capacitor Preferences para secretos. Elegir y verificar un plugin compatible antes de implementar ese adaptador. Mantener el acceso en memoria y eliminar credenciales al cerrar sesión.
+En móviles, guardar la renovación mediante un adaptador de almacenamiento seguro basado en Keychain/Keystore; no usar preferencias sin cifrar para secretos. Elegir y verificar un paquete Flutter compatible antes de implementar ese adaptador y ajustar el transporte del backend cuando corresponda. Mantener el acceso en memoria y eliminar credenciales al cerrar sesión.
 
 Usar tokens de verificación y recuperación de un solo uso, con expiración y hashes en el servidor. Evitar revelar si un correo existe en la respuesta de recuperación. Limitar intentos de acceso, registro, envío de correo e importación. No registrar contraseñas, tokens, mensajes privados completos ni coordenadas privadas en logs. Las acciones administrativas requieren autorización y auditoría.
 
@@ -184,13 +183,10 @@ Persistir notificaciones internas después de confirmar la operación de negocio
 
 ## 9. Configuración
 
-Estos nombres son el contrato de configuración. El frontend incluye `frontend/.env.example`; el backend valida su configuración al iniciar y tiene `backend/.env.example`. Todo valor `VITE_*` se incluye en el cliente y debe considerarse público.
+El backend valida su configuración al iniciar y tiene `backend/.env.example`. El frontend vacío no tiene configuración de API ni archivos de entorno. Los nombres del cliente se definirán al implementar sus servicios; cualquier valor incluido en la aplicación debe considerarse extraíble y no contener secretos.
 
 | Proyecto | Variables previstas | Uso |
 | --- | --- | --- |
-| Frontend | `VITE_API_BASE_URL` | URL de la API, incluido `/api/v1`. |
-| Frontend | `VITE_WS_URL` | Origen del servidor Socket.IO. |
-| Frontend | `VITE_MAPBOX_PUBLIC_TOKEN` | Token público con permisos mínimos y restricciones aplicables. |
 | Backend | `NODE_ENV`, `PORT`, `APP_PUBLIC_URL`, `CORS_ORIGINS` | Entorno, puerto, enlaces de cuenta y orígenes permitidos. |
 | Backend | `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | Conexión MySQL local y entornos separados. |
 | Backend | `JWT_ACCESS_SECRET`, `ACCESS_TOKEN_TTL_SECONDS`, `REFRESH_TOKEN_TTL_DAYS` | Firma y duración de sesiones; secreto independiente por entorno. |
@@ -200,27 +196,27 @@ Estos nombres son el contrato de configuración. El frontend incluye `frontend/.
 
 Los nombres específicos de credenciales de hosting, archivos, correo y push se documentarán cuando se elijan sus proveedores. Los adaptadores reales deberán rechazar configuración incompleta; solo desarrollo y pruebas permitirán adaptadores simulados. El modo BGG deshabilitado debe comunicar su indisponibilidad y conservar la biblioteca manual.
 
-Nunca versionar `.env`, credenciales push, certificados, llaves de firma móvil, contraseñas o tokens. Las URLs usadas en dispositivos físicos deberán alcanzar el equipo de desarrollo; `localhost` dentro del dispositivo no apunta al backend del equipo. Evitar copiar secretos de backend a configuración de Capacitor o Vite.
+Nunca versionar `.env`, credenciales push, certificados, llaves de firma móvil, contraseñas o tokens. Las URLs usadas en dispositivos físicos deberán alcanzar el equipo de desarrollo; `localhost` dentro del dispositivo no apunta al backend del equipo. Evitar copiar secretos de backend a Dart, recursos nativos o parámetros de compilación del cliente.
 
 ## 10. Desarrollo y compilación
 
-El repositorio no fija versiones de Node.js ni npm: instalar dependencias y ejecutar scripts desde el directorio del proyecto correspondiente, respetando la compatibilidad que requieran sus herramientas. MySQL 8.4 LTS se ejecuta localmente. Los puertos de desarrollo son 8080 para Vite, 3000 para NestJS y 3306 para MySQL; son configurables y no forman parte de las reglas de negocio.
+Ejecutar Flutter desde `frontend/` y npm desde `backend/`. La base móvil se creó con Flutter 3.47.5 del canal estable y Dart 3.13.4; mantener el lockfile del frontend. El repositorio no fija versiones de Node.js ni npm. MySQL 8.4 LTS se ejecuta localmente. Los puertos de desarrollo son 3000 para NestJS y 3306 para MySQL; no hay servidor web del frontend.
 
-Para Android se necesitarán Android Studio 2025.2.1 o superior y SDK configurado. La base Capacitor 8 establece Android API 24 como mínimo y SDK de compilación y destino 36. Para iOS se necesitarán macOS, Xcode 26 o superior y sus herramientas de línea de comandos, con Swift Package Manager como base. MeepleWorld fijará iOS 16 como mínimo por los requisitos de Ionic 9. Ver [entorno Capacitor](https://capacitorjs.com/docs/getting-started/environment-setup), [actualización Capacitor 8](https://capacitorjs.com/docs/updating/8-0) y [soporte Ionic 9](https://github.com/ionic-team/ionic-framework/blob/main/BREAKING.md).
+Para Android se necesitan Android Studio, un JDK compatible, SDK Platform 36, Build-Tools, Command-line Tools, NDK y un dispositivo físico conectado por USB, con depuración USB habilitada y el equipo autorizado. No usar emuladores Android. El proyecto usa los valores Android de Flutter: mínimo API 24, compilación/destino 36 y NDK 28.2.13676358 en esta versión. Para iOS se necesitan macOS, Xcode completo con herramientas y licencias configuradas y un simulador o dispositivo; CocoaPods permite incorporar plugins que lo requieran. El proyecto iOS generado declara iOS 15 como mínimo. Ver [instalación de Flutter](https://docs.flutter.dev/install/manual), [configuración Android](https://docs.flutter.dev/platform-integration/android/setup) y [configuración iOS](https://docs.flutter.dev/platform-integration/ios/setup).
 
-Verificar además que los requisitos de Mapbox y los plugins elegidos sean compatibles antes de fijar definitivamente los destinos. La firma, los identificadores de aplicación y las cuentas de las tiendas están pendientes y deberán configurarse sin incluir secretos en Git.
+Verificar los requisitos de Mapbox y los paquetes elegidos antes de confirmar los destinos mínimos definitivos. La firma y las cuentas de las tiendas están pendientes y deberán configurarse sin incluir secretos en Git. La plantilla Android usa firma de depuración; no representa una configuración de publicación.
 
-El servidor web, las comprobaciones de tipos, la compilación web y la sincronización/apertura del proyecto Android están configurados en `frontend/`. El backend también cuenta con instalación independiente, migración inicial, servidor de desarrollo y comprobación de tipos. No hay restricciones globales de versión para Node.js o npm en el repositorio.
+Usar `flutter doctor -v` para comprobar la instalación. Generar `ios/` no confirma que Xcode esté instalado ni que iOS compile. Consultar el estado local y las instrucciones de arranque en [frontend/README.md](../frontend/README.md). El backend conserva su instalación independiente, migración inicial, servidor de desarrollo y comprobaciones de tipos.
 
 | Directorio | Comando | Propósito y estado |
 | --- | --- | --- |
-| `frontend/` | `npm install` | Instalar dependencias y actualizar el lockfile del frontend. |
-| `frontend/` | `npm ci` | Instalar de forma reproducible desde `frontend/package-lock.json`. |
-| `frontend/` | `npm run dev` | Servir el frontend con Vite en el puerto 8080. |
-| `frontend/` | `npm run typecheck` | Comprobar tipos del frontend con `vue-tsc`. |
-| `frontend/` | `npm run build` | Comprobar tipos y generar el frontend web en `dist/`. |
-| `frontend/` | `npm run android:sync` | Compilar la web y sincronizar sus recursos con Android. |
-| `frontend/` | `npm run android:open` | Abrir el proyecto Android en Android Studio. |
+| `frontend/` | `flutter pub get` | Resolver dependencias utilizando `pubspec.lock`. |
+| `frontend/` | `dart format --output=none --set-exit-if-changed lib` | Comprobar el formato del código Dart. |
+| `frontend/` | `flutter analyze` | Comprobar tipos y reglas de análisis/lint. |
+| `frontend/` | `flutter devices` | Listar destinos disponibles; para Android, seleccionar el dispositivo físico conectado. |
+| `frontend/` | `flutter run -d <id>` | Compilar y ejecutar en el dispositivo móvil seleccionado. |
+| `frontend/` | `flutter build apk --debug` | Compilar un APK de desarrollo. |
+| `frontend/` | `flutter build ios --simulator` | Compilar para simulador iOS con Xcode configurado. |
 | `backend/` | `npm install` | Instalar dependencias y actualizar el lockfile del backend. |
 | `backend/` | `npm ci` | Instalar de forma reproducible desde `backend/package-lock.json`. |
 | `backend/` | `npm run start:dev` | Servir NestJS en modo desarrollo. |
@@ -229,15 +225,15 @@ El servidor web, las comprobaciones de tipos, la compilación web y la sincroniz
 | `backend/` | `npm run migration:run` | Aplicar migraciones a la base configurada. |
 | `backend/` | `npm run migration:revert` | Revertir la última migración, cuando sea reversible y esté autorizado. |
 | `backend/` | `npm run build` | Compilar el backend. |
-| Cada proyecto | `npm run lint` | Pendiente: definir y configurar ESLint por proyecto. |
-| Cada proyecto | `npm test` | Futuro: ejecutar las pruebas cuando se implementen. |
-| `frontend/` | `npx cap sync ios` | Futuro: sincronizar iOS tras inicializar esa plataforma. |
+| `backend/` | `npm run lint` | Pendiente: definir y configurar ESLint. |
+| `backend/` | `npm test` | Futuro: ejecutar las pruebas cuando se implementen. |
+| `frontend/` | `flutter test` | Futuro: ejecutar las pruebas cuando existan funcionalidades y suite. |
 
-Capacitor usa `webDir: dist`; Android se encuentra inicializado dentro del frontend. Compilar el frontend antes de sincronizar; finalizar la compilación nativa en Android Studio. iOS aún no está inicializado. Los directorios nativos serán parte del proyecto y sus artefactos de compilación serán generados. No presentar `cap sync` como una compilación final o una publicación en tiendas.
+Los directorios nativos forman parte del frontend; cachés, rutas locales y artefactos de compilación están excluidos de Git mediante sus archivos `.gitignore`. Los iconos y recursos de arranque generados son provisionales y no definen la identidad visual. La base vacía no necesita una conexión al backend para arrancar.
 
 ## 11. Verificación
 
-Las pruebas de negocio deben cubrir reglas con efecto real. No exigir pruebas que únicamente reflejen el texto de esta documentación. El frontend cuenta con comprobaciones de tipos y compilación; el backend cuenta con comprobación de tipos y compilación. Las suites de pruebas aún no están configuradas.
+Las pruebas de negocio deben cubrir reglas con efecto real. No exigir pruebas que únicamente reflejen el texto de esta documentación. El frontend usa `flutter analyze` y comprobación de formato; verificar también compilación y ejecución móvil cuando las herramientas estén disponibles. La base vacía no tiene una suite Dart de pruebas. El backend cuenta con comprobación de tipos y compilación; su suite sigue pendiente. Los escenarios siguientes corresponden a funcionalidades futuras del cliente.
 
 - Con MySQL de pruebas y migraciones reales: competencia por el último lugar, grupos con acompañantes, aprobación parcial sin cupo, reintentos y cancelación doble. No usar SQLite como sustituto para verificar bloqueos de MySQL.
 - API y Socket.IO: permisos de autor y asistente, omisión de coordenadas privadas en todas las proyecciones públicas, revocación durante una conexión abierta y cuenta suspendida.
@@ -246,7 +242,7 @@ Las pruebas de negocio deben cubrir reglas con efecto real. No exigir pruebas qu
 - Frontend y recorridos: filtros consistentes, ciudad manual sin geolocalización, aceptación de oferta con error `409`, acceso al chat, ausencia de conexión y push denegado.
 - Sesiones: verificación, recuperación de un solo uso, renovación rotada, reutilización, cierre de sesión y autorización tras revocación.
 
-Para cambios del frontend o backend, ejecutar sus checks configurados de tipos y compilación. El frontend consume los endpoints disponibles del backend para cuentas, catálogo/biblioteca, mesas, participaciones y anuncios; no integra chat, Socket.IO, BGG, notificaciones, reputación ni moderación. La compilación nativa Android y la prueba en emulador/dispositivo deben completarse en Android Studio y registrarse antes de afirmar que Android fue verificado. No afirmar que una compilación o entrega push pasó si solo se comprobó la web. iOS se verificará cuando se inicialice.
+Para cambios del frontend, comprobar formato, análisis estático y compilación móvil según disponibilidad. Para cambios del backend, ejecutar sus checks configurados de tipos y compilación. El frontend vacío no consume ningún endpoint; las funcionalidades REST existentes siguen en el backend. Registrar por separado APK compilado, ejecución en dispositivo físico Android y verificación iOS. No afirmar que iOS fue verificado si falta Xcode ni que push funciona sin haber integrado y probado su entrega.
 
 ## 12. Forma de trabajo para agentes
 
