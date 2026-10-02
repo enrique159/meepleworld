@@ -17,6 +17,8 @@ Esta guía define cómo construir los proyectos del monorepo. Las reglas de nego
 | Backend | NestJS 12 con ESM y adaptador HTTP Express. |
 | Persistencia | MySQL 8.4 LTS, TypeORM, `@nestjs/typeorm` y controlador `mysql2`. |
 | Contratos | API REST bajo `/api/v1`, documentada con OpenAPI; Socket.IO para chat. |
+| Acceso | Cuenta activa, correo verificado y sesión válida para toda la plataforma, incluidas las lecturas. Excepciones explícitas para flujos de acceso y health check. Adaptación del backend inicial pendiente. |
+| Verificación de correo | Confirmación por correo en producción; verificación automática al crear la cuenta con `NODE_ENV` distinto de `production` (`development` o `test`). Adaptación del registro inicial pendiente. |
 | Pruebas previstas | `flutter_test` e `integration_test` para el cliente cuando se implementen funcionalidades; Vitest y Supertest para el backend. |
 | Desarrollo local | Flutter/Dart, herramientas Android/iOS, dispositivo Android físico por USB, Node.js y MySQL instalados localmente; sin Docker ni Docker Compose. |
 
@@ -38,6 +40,8 @@ meepleworld/
 │   ├── pubspec.yaml
 │   ├── pubspec.lock
 │   ├── analysis_options.yaml
+│   ├── assets/
+│   │   └── fonts/              # archivos Jeko registrados en pubspec.yaml
 │   ├── lib/
 │   │   └── main.dart            # arranque y superficie vacía
 │   ├── android/                 # proyecto Android generado por Flutter
@@ -55,21 +59,25 @@ meepleworld/
     └── .env.example
 ```
 
-Cada proyecto se instala, ejecuta y mantiene desde su propio directorio; no crear una configuración de npm workspaces ni un paquete en la raíz. Los proyectos nativos de Flutter permanecen dentro del frontend. No crear un tercer proyecto para compartir entidades del backend: los contratos públicos deben ser independientes del ORM y del código del servidor. Android e iOS están generados; su compilación y ejecución requieren las herramientas de cada plataforma. El identificador de aplicación de desarrollo es `com.meepleworld.app`; firma y publicación en tiendas están pendientes.
+Cada proyecto se instala, ejecuta y mantiene desde su propio directorio; no crear una configuración de npm workspaces ni un paquete en la raíz. Los proyectos nativos de Flutter permanecen dentro del frontend. No crear un tercer proyecto para compartir entidades del backend: los contratos de la API deben ser independientes del ORM y del código del servidor. Android e iOS están generados; su compilación y ejecución requieren las herramientas de cada plataforma. El identificador de aplicación de desarrollo es `com.meepleworld.app`; firma y publicación en tiendas están pendientes.
 
 ## 3. Frontend
 
 El frontend `frontend/` arranca una superficie vacía con el nombre MeepleWorld. No contiene pantallas de producto, navegación, estado de negocio, servicios HTTP, temas personalizados ni integraciones. La identidad visual y el diseño de pantallas los prepara el responsable; mantener esta base vacía hasta recibir ese diseño y autorización para implementarlo.
 
+Las fuentes entregadas por el responsable están en `frontend/assets/fonts/` y registradas en `frontend/pubspec.yaml`: `Jeko` con pesos 100–900 normales y cursivos, y `JekoItalicVariable` como fuente fija cursiva independiente, porque el archivo no contiene ejes variables. Son recursos disponibles, todavía sin asignación a pantallas ni a un tema global. Los ejemplos de uso y el registro están documentados en [frontend/README.md](../frontend/README.md).
+
 El backend inicial está implementado en `backend/` con autenticación y recuperación de acceso, perfiles, catálogo/biblioteca, descubrimiento y publicación de mesas, participaciones, ubicación privada y anuncios. El contrato REST se mantiene en [openapi.yaml](../backend/openapi.yaml). El chat, Socket.IO, BGG, notificaciones, reputación, moderación y mapa siguen pendientes porque no hay contratos implementados para esas funciones.
 
-Al comenzar la implementación móvil, separar presentación, estado y acceso a servicios; elegir entonces las dependencias necesarias. Consumir los contratos públicos de la API mediante modelos Dart independientes del ORM. La autenticación móvil y el almacenamiento seguro de credenciales siguen pendientes.
+La regla de producto exige una sesión válida para entrar a cualquier vista de contenido. Al implementar navegación, comprobar o restaurar la sesión antes de abrir mesas, anuncios, catálogo, biblioteca, mapa o perfiles, también desde enlaces. Sin sesión mostrar únicamente los flujos de registro, acceso, verificación y recuperación. Si la renovación falla por expiración o revocación, volver al flujo de acceso y retirar el estado local de la cuenta y el contenido protegido. Este comportamiento todavía no existe en el frontend vacío.
+
+Al comenzar la implementación móvil, separar presentación, estado y acceso a servicios; elegir entonces las dependencias necesarias. Consumir los contratos de la API mediante modelos Dart independientes del ORM. La autenticación móvil y el almacenamiento seguro de credenciales siguen pendientes.
 
 Al implementar conexiones y notificaciones, considerar el ciclo de vida móvil: detener listeners al salir, eliminar suscripciones al cerrar sesión y recuperar datos autorizados al reconectar o volver del segundo plano. El transporte en vivo complementará el historial del servidor.
 
 El servidor será la autoridad para cupo, permisos, precios publicados y estados. No calcular confirmaciones definitivas únicamente en el estado del cliente ni mostrar éxito antes de la respuesta. Ante un conflicto, refrescar disponibilidad y explicar la acción necesaria. Evitar duplicar solicitudes mediante botones deshabilitados mientras una operación está en curso y control de reintentos.
 
-El mapa y el listado compartirán filtros y datos de consulta. Mapbox recibirá únicamente la ubicación permitida por la respuesta del backend. Una mesa privada utilizará el punto aproximado público hasta que el servidor autorice datos exactos. Pedir geolocalización en contexto mediante un adaptador móvil compatible con Flutter; ofrecer siempre selección de ciudad. Los paquetes de mapa y geolocalización aún no están incorporados.
+El mapa y el listado compartirán filtros y datos de consulta, siempre con sesión válida. Mapbox recibirá únicamente la ubicación permitida por la respuesta del backend. Una mesa privada utilizará el punto aproximado compartido con la comunidad autenticada hasta que el servidor autorice datos exactos. Pedir geolocalización en contexto mediante un adaptador móvil compatible con Flutter; ofrecer siempre selección de ciudad. Los paquetes de mapa y geolocalización aún no están incorporados.
 
 Las aplicaciones móviles respetarán zonas seguras, teclado, navegación de regreso y accesibilidad de Android/iOS. Los formularios y estados tendrán etiquetas semánticas y errores comprensibles. Mostrar fechas en la zona horaria de la mesa, identificarla cuando difiera de la del usuario y formatear dinero como MXN. La adaptación visual se definirá con el diseño del responsable.
 
@@ -79,22 +87,36 @@ La primera versión no tendrá escritura offline ni promesas de sincronización 
 
 La API inicial usa `/api/v1`, DTOs con validación estricta y proyecciones de respuesta independientes de las entidades. Incluye autenticación con Argon2id/JWT y sesiones renovables, perfiles públicos/privados, catálogo y biblioteca, mesas con cupos y ubicación protegida, y anuncios del marketplace. El correo local es un adaptador simulado en un archivo excluido de Git; un proveedor real, Socket.IO/chat, BGG, reportes, reputación, notificaciones y cargas de imágenes aún están pendientes.
 
+La obligación de autenticar todas las lecturas es una regla acordada pendiente de implementación. Actualmente aceptan consultas anónimas `GET /users/:id`, `GET /games`, `GET /games/:id`, `GET /tables`, `GET /tables/:id`, `GET /marketplace/listings` y `GET /marketplace/listings/:id`, bajo `/api/v1`. El OpenAPI actual refleja ese comportamiento; al proteger las rutas, actualizar también sus requisitos de seguridad y respuestas de error. En el producto previsto, «público» describe contenido compartido con usuarios autenticados, no endpoints anónimos.
+
 Construir un monolito modular. Los módulos previstos son autenticación, usuarios, catálogo, bibliotecas, mesas y participaciones, marketplace y operaciones declaradas, conversaciones, notificaciones, reputación, moderación e integraciones. Cada módulo tendrá controladores para transporte, servicios para reglas y repositorios TypeORM para persistencia.
 
 ### API REST
 
 - Prefijo `/api/v1`; contratos de solicitud, respuesta y error independientes de entidades TypeORM, documentados mediante `@nestjs/swagger`.
+- Exigir autenticación, cuenta activa y correo verificado por defecto en todos los endpoints de producto, incluidos `GET`, mediante una protección central del backend. Declarar las excepciones de acceso explícitamente; no confiar únicamente en restricciones de navegación del cliente.
 - DTOs tipados con validación en ejecución. Rechazar cantidades no enteras, valores fuera del dominio, propiedades no permitidas y estados incompatibles.
-- Separar respuestas públicas de datos privados y de administración. Nunca serializar directamente entidades que contengan credenciales, direcciones privadas o tokens.
+- Separar respuestas compartidas con la comunidad autenticada de datos privados y de administración. Nunca serializar directamente entidades que contengan credenciales, direcciones privadas o tokens.
 - Paginar listados, mensajes e historial; limitar el tamaño de página y admitir filtros documentados. En chat ordenar de forma estable para recuperar mensajes después de una desconexión.
 - Autorizar por cuenta activa, correo verificado, propiedad y relación con el recurso. El rol administrador no sustituye la verificación de una intervención autorizada.
 - Responder con códigos HTTP coherentes: `401` sin autenticación válida, `403` sin permiso, `404` recurso no disponible, `409` conflicto de cupo o estado y `400` entrada inválida. Incluir un código de error estable, un mensaje comprensible y un identificador de petición; no exponer trazas o consultas SQL.
+
+Las únicas excepciones previstas al bearer access token son estas rutas bajo `/api/v1`; ninguna permite consultar contenido de producto:
+
+| Rutas | Condición de acceso |
+| --- | --- |
+| `POST /auth/register`, `POST /auth/login` | Sin sesión previa; validar registro o credenciales y limitar intentos. El inicio de sesión exige cuenta activa y correo verificado. |
+| `POST /auth/verify-email`, `POST /auth/verification/resend`, `POST /auth/password/forgot`, `POST /auth/password/reset` | Sin sesión previa; exigir el token de un solo uso cuando corresponda y limitar intentos y envíos. |
+| `POST /auth/refresh` | Sin access token vigente, pero con credencial de renovación válida y sesión no revocada; comprobar cuenta activa y correo verificado. |
+| `GET /health` | Comprobación operativa sin contenido de usuarios, mesas o anuncios. |
+
+`GET /auth/me` y `POST /auth/logout` siguen requiriendo autenticación. Al adaptar OpenAPI, declarar bearer como requisito predeterminado y sobrescribirlo explícitamente solo en estas excepciones, documentando la credencial propia de renovación. Responder `401` ante credenciales ausentes, inválidas, expiradas o revocadas y `403` ante una cuenta no activa, correo sin verificar o falta de permiso sobre un recurso.
 
 El contrato deberá representar por separado lugares solicitados, lugares ofrecidos parcialmente y lugares confirmados. El número siempre incluirá al titular. Para mesas, distinguir modalidad abierta o con aprobación y ubicación pública o exclusiva de confirmados. Estas son capacidades del contrato previsto, no endpoints implementados.
 
 ### Socket.IO
 
-Autenticar conexiones y autorizar por conversación cada unión a sala, lectura y envío. No confiar en identificadores de usuario o salas enviados por el cliente como prueba de permiso. Revalidar cuenta y pertenencia al enviar; una conexión previa no conserva permisos revocados.
+Autenticar conexiones con sesión válida, cuenta activa y correo verificado, y autorizar por conversación cada unión a sala, lectura y envío. No confiar en identificadores de usuario o salas enviados por el cliente como prueba de permiso. Revalidar sesión, cuenta y pertenencia al enviar; una conexión previa no conserva permisos revocados. Desconectar al cerrar o revocar la sesión e impedir nuevas entregas cuando la autenticación deje de ser válida.
 
 Persistir el mensaje antes de confirmar su recepción. Asociar un identificador de envío del cliente para deduplicar reintentos y devolver el resultado previo cuando corresponda. Los eventos complementarán el historial REST. Evitar que reconectar duplique listeners, conversaciones o mensajes.
 
@@ -111,7 +133,7 @@ La migración inicial de `backend/` crea usuarios, sesiones y tokens de un solo 
 | Juego | Registro local con nombre, metadatos e identificador BGG opcional y único cuando exista. |
 | Entrada de biblioteca | Relación usuario-juego única, procedencia manual o BGG y datos de importación sin credenciales BGG del usuario. |
 | Mesa y juegos de mesa | Anfitrión, horario, zona horaria, grupo inicial, cupo ofrecido, modalidad, cuota, amenidades, estado y juegos asociados. |
-| Ubicación de mesa | Dirección y coordenadas exactas, ubicación aproximada pública, ciudad y política de visibilidad. |
+| Ubicación de mesa | Dirección y coordenadas exactas, ubicación aproximada para la comunidad autenticada, ciudad y política de visibilidad. |
 | Participación | Mesa y titular, estado, lugares solicitados, propuesta parcial y lugares confirmados. El historial registra cancelaciones y revisiones. |
 | Anuncio | Autor, tipo venta o búsqueda, juego, condición, precio o presupuesto, ciudad, imágenes y estado. |
 | Operación declarada | Anuncio, conversación, comprador, vendedor y confirmación de cada parte. Habilita reputación tras confirmación bilateral. |
@@ -139,9 +161,11 @@ Mantener una sola participación vigente por usuario y mesa, con una representac
 
 ### Privacidad y permisos
 
-Filtrar la dirección privada, coordenadas exactas e instrucciones privadas antes de serializar y emitir eventos. También proteger recursos de mapa, distancias, logs y payloads push. Usar la ubicación pública aproximada para filtros y distancias de una mesa privada; no generar aproximaciones aleatorias repetidas que puedan promediarse para reconstruir el punto real.
+Exigir sesión válida antes de entregar contenido de producto, incluso perfiles y proyecciones compartidas con la comunidad. Que la dirección tenga visibilidad `public` significa que la ven los usuarios autenticados; `confirmed-only` exige además ser anfitrión, asistente confirmado o administrador en una revisión autorizada.
 
-Al cambiar participación o visibilidad, invalidar cachés y revocar acceso a datos exactos y chat cuando corresponda. No usar cachés públicas para respuestas privadas. Comprobar propiedad de anuncios, interlocutores y rol del usuario por recurso, tanto en HTTP como en Socket.IO.
+Filtrar la dirección privada, coordenadas exactas e instrucciones privadas antes de serializar y emitir eventos. También proteger recursos de mapa, distancias, logs y payloads push. Usar la ubicación aproximada compartida con la comunidad autenticada para filtros y distancias de una mesa privada; no generar aproximaciones aleatorias repetidas que puedan promediarse para reconstruir el punto real.
+
+Al cambiar participación o visibilidad, invalidar cachés y revocar acceso a datos exactos y chat cuando corresponda. Las cachés no deben permitir consultar contenido sin sesión ni eludir permisos; no usar cachés públicas para respuestas privadas. Comprobar propiedad de anuncios, interlocutores y rol del usuario por recurso, tanto en HTTP como en Socket.IO.
 
 ### Horario, dinero y reputación
 
@@ -153,6 +177,23 @@ Habilitar calificaciones de mesa solo después de finalizar, entre anfitrión y 
 
 ## 7. Autenticación y protección de datos
 
+La autenticación es obligatoria para consultar y operar en la plataforma. Registro, verificación y recuperación permiten obtener o recuperar el acceso; no habilitan navegación anónima. Una cuenta sin correo verificado o suspendida no puede acceder al contenido. La renovación exige su credencial válida y no sustituye las comprobaciones de estado de cuenta y sesión.
+
+### Verificación de correo según el entorno
+
+La decisión depende exclusivamente de `NODE_ENV` validado en el backend, cuyos valores admitidos son `development`, `test` y `production`. Al registrar una cuenta, aplicar estas reglas dentro de la transacción de creación:
+
+| Entorno | Comportamiento previsto del registro |
+| --- | --- |
+| `production` | Guardar `emailVerifiedAt: null`, generar un token de verificación de un solo uso y preparar su envío por correo. Responder `emailVerified: false` y `verificationEmailQueued: true`; impedir el inicio de sesión hasta confirmar el correo. |
+| `development` o `test` | Guardar `emailVerifiedAt` con el instante de creación de la cuenta, sin generar token ni enviar correo de verificación. Responder `emailVerified: true` y `verificationEmailQueued: false`; permitir iniciar sesión con las credenciales recién registradas. |
+
+Esta regla se aplica al crear cuentas nuevas. El registro no emite una sesión; el usuario debe iniciar sesión. Mantener las comprobaciones de correo verificado, cuenta activa y sesión en los guards y servicios: fuera de producción se persiste la verificación, no se omite la autorización. El cliente se guía por la respuesta de registro y no elige ni envía el entorno o el estado de verificación. La recuperación de contraseña conserva sus tokens y flujo de correo en ambos casos.
+
+La adaptación está pendiente: el registro inicial todavía guarda `emailVerifiedAt: null`, genera token y prepara correo en todos los entornos admitidos. Al implementarla, actualizar los tipos de respuesta y el contrato OpenAPI de `POST /auth/register`. La configuración actual rechaza producción porque solo existe el adaptador de correo local; habilitarla seguirá requiriendo un proveedor real.
+
+### Sesiones y credenciales
+
 Usar Argon2id para contraseñas. La API emitirá tokens de acceso de corta duración y renovaciones con rotación y revocación, registrando sesiones para distintos dispositivos. Como valores iniciales de configuración, usar 15 minutos para acceso y 30 días para renovación; validar expiración, firma y cuenta activa.
 
 Guardar únicamente el hash del token de renovación en el servidor. Rotar al renovar, detectar reutilización y revocar la sesión comprometida. Cerrar sesión elimina la renovación; recuperación de contraseña y suspensión revocan sesiones. Proteger operaciones también con el estado vigente de la cuenta, sin depender solo del contenido de un JWT todavía válido.
@@ -161,7 +202,7 @@ La API inicial entrega la renovación mediante una cookie HttpOnly, Secure en pr
 
 En móviles, guardar la renovación mediante un adaptador de almacenamiento seguro basado en Keychain/Keystore; no usar preferencias sin cifrar para secretos. Elegir y verificar un paquete Flutter compatible antes de implementar ese adaptador y ajustar el transporte del backend cuando corresponda. Mantener el acceso en memoria y eliminar credenciales al cerrar sesión.
 
-Usar tokens de verificación y recuperación de un solo uso, con expiración y hashes en el servidor. Evitar revelar si un correo existe en la respuesta de recuperación. Limitar intentos de acceso, registro, envío de correo e importación. No registrar contraseñas, tokens, mensajes privados completos ni coordenadas privadas en logs. Las acciones administrativas requieren autorización y auditoría.
+Usar tokens de verificación cuando corresponda y tokens de recuperación de un solo uso, con expiración y hashes en el servidor. Evitar revelar si un correo existe en la respuesta de recuperación. Limitar intentos de acceso, registro, envío de correo e importación. No registrar contraseñas, tokens, mensajes privados completos ni coordenadas privadas en logs. Las acciones administrativas requieren autorización y auditoría.
 
 ## 8. Integraciones y adaptadores
 
@@ -177,7 +218,7 @@ Encapsular el cliente XML con caché, timeout, límites de concurrencia y reinte
 
 Definir adaptadores de almacenamiento de imágenes, envío de correo y entrega push para desacoplar dominio y proveedor. Los proveedores de producción están pendientes. En desarrollo se admitirán archivos locales fuera del código fuente y adaptadores de prueba para correo y push, identificados como simulados y sin afirmar que se entregó un mensaje real.
 
-Validar imágenes por tipo real y tamaño, generar nombres propios y no ejecutar contenido subido. Las imágenes públicas de perfiles o anuncios tendrán un tratamiento distinto de recursos privados. Las credenciales del proveedor de almacenamiento pertenecerán al backend.
+Validar imágenes por tipo real y tamaño, generar nombres propios y no ejecutar contenido subido. Las imágenes de perfiles o anuncios compartidas con la comunidad requerirán autorización para su entrega; los recursos privados exigirán además el permiso específico. Al elegir almacenamiento, evitar URLs permanentes de acceso anónimo para contenido de MeepleWorld y definir su entrega autenticada o temporal tras comprobar permisos. Las credenciales del proveedor de almacenamiento pertenecerán al backend.
 
 Persistir notificaciones internas después de confirmar la operación de negocio y procesar su entrega externa por separado, con un registro recuperable de entregas pendientes. Un fallo de correo o push no revertirá una asistencia confirmada. Los dispositivos tendrán registro y baja de tokens push; cerrar sesión desvinculará el dispositivo de la cuenta. Los avisos push serán genéricos y abrirán recursos solo después de comprobar permiso vigente.
 
@@ -193,6 +234,8 @@ El backend valida su configuración al iniciar y tiene `backend/.env.example`. E
 | Backend | `AUTH_COOKIE_SECURE`, `AUTH_COOKIE_SAME_SITE` | Política de cookies; `Secure` obligatorio en producción. |
 | Backend | `MAIL_DRIVER`, `LOCAL_MAILBOX_PATH` | El adaptador local simulado guarda mensajes fuera del control de versiones. |
 | Backend futuro | `BGG_ENABLED`, `BGG_API_TOKEN`, `STORAGE_DRIVER`, `LOCAL_UPLOAD_PATH`, `PUSH_DRIVER` | Integraciones externas pendientes de configurar. |
+
+`NODE_ENV=production` exige confirmación de correo. Con `NODE_ENV=development` o `NODE_ENV=test`, las cuentas nuevas deberán crearse con correo verificado automáticamente; esta adaptación del registro está pendiente. No añadir una bandera independiente para omitir la verificación en producción.
 
 Los nombres específicos de credenciales de hosting, archivos, correo y push se documentarán cuando se elijan sus proveedores. Los adaptadores reales deberán rechazar configuración incompleta; solo desarrollo y pruebas permitirán adaptadores simulados. El modo BGG deshabilitado debe comunicar su indisponibilidad y conservar la biblioteca manual.
 
@@ -236,11 +279,12 @@ Los directorios nativos forman parte del frontend; cachés, rutas locales y arte
 Las pruebas de negocio deben cubrir reglas con efecto real. No exigir pruebas que únicamente reflejen el texto de esta documentación. El frontend usa `flutter analyze` y comprobación de formato; verificar también compilación y ejecución móvil cuando las herramientas estén disponibles. La base vacía no tiene una suite Dart de pruebas. El backend cuenta con comprobación de tipos y compilación; su suite sigue pendiente. Los escenarios siguientes corresponden a funcionalidades futuras del cliente.
 
 - Con MySQL de pruebas y migraciones reales: competencia por el último lugar, grupos con acompañantes, aprobación parcial sin cupo, reintentos y cancelación doble. No usar SQLite como sustituto para verificar bloqueos de MySQL.
-- API y Socket.IO: permisos de autor y asistente, omisión de coordenadas privadas en todas las proyecciones públicas, revocación durante una conexión abierta y cuenta suspendida.
+- API y Socket.IO: rechazo de lecturas de producto sin sesión válida, excepciones de acceso explícitas, cuenta sin verificar o suspendida, permisos de autor y asistente, omisión de coordenadas privadas en proyecciones compartidas y revocación durante una conexión abierta.
 - Biblioteca: importación repetida, conservación de juegos manuales, colección inválida, timeout y falta de autorización BGG. Usar respuestas controladas en pruebas, no depender de su servicio real.
 - Reputación: mesa finalizada con participación elegible, mesa cancelada, acompañante sin cuenta, operación unilateral, autoevaluación y duplicados.
-- Frontend y recorridos: filtros consistentes, ciudad manual sin geolocalización, aceptación de oferta con error `409`, acceso al chat, ausencia de conexión y push denegado.
-- Sesiones: verificación, recuperación de un solo uso, renovación rotada, reutilización, cierre de sesión y autorización tras revocación.
+- Frontend y recorridos: acceso obligatorio antes de ver contenido o abrir enlaces, filtros consistentes, ciudad manual sin geolocalización, aceptación de oferta con error `409`, acceso al chat, ausencia de conexión y push denegado.
+- Sesiones: verificación, recuperación de un solo uso, renovación rotada, reutilización, cierre de sesión, autorización tras revocación y retiro del contenido protegido del estado local cuando termina la sesión.
+- Registro por entorno: en `development` y `test`, verificación persistida al crear la cuenta, respuesta `emailVerified: true`/`verificationEmailQueued: false`, ausencia de token y envío de verificación e inicio de sesión inmediato. En producción, cuenta sin verificar y acceso denegado hasta consumir el token. Usar un adaptador de correo controlado en pruebas y comprobar que la recuperación funciona en ambos casos.
 
 Para cambios del frontend, comprobar formato, análisis estático y compilación móvil según disponibilidad. Para cambios del backend, ejecutar sus checks configurados de tipos y compilación. El frontend vacío no consume ningún endpoint; las funcionalidades REST existentes siguen en el backend. Registrar por separado APK compilado, ejecución en dispositivo físico Android y verificación iOS. No afirmar que iOS fue verificado si falta Xcode ni que push funciona sin haber integrado y probado su entrega.
 

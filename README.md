@@ -4,6 +4,8 @@ MeepleWorld es una plataforma en desarrollo para personas que disfrutan los jueg
 
 Su propuesta principal son las **mesas**: encuentros que una persona organiza en su ciudad y publica para que otros puedan asistir. El anfitrión indica cuándo se juega, qué juegos propone, cuántos lugares ofrece y qué amenidades estarán disponibles. Cada mesa puede ser abierta o requerir aprobación, y puede tener una cuota opcional acordada con el anfitrión.
 
+Para acceder a MeepleWorld será obligatorio crear una cuenta e iniciar sesión con el correo verificado. En producción, el usuario deberá confirmarlo mediante correo; fuera de producción, se marcará como verificado automáticamente al crear la cuenta. También se requerirá una sesión válida para explorar mesas y anuncios, consultar el catálogo o ver perfiles. Sin sesión estarán disponibles únicamente los flujos de registro, acceso, verificación y recuperación de cuenta.
+
 ## Qué podrás hacer
 
 - Encontrar mesas cercanas en un mapa o en un listado.
@@ -13,7 +15,7 @@ Su propuesta principal son las **mesas**: encuentros que una persona organiza en
 - Conversar con vendedores y compradores, y coordinarte con los asistentes de una mesa.
 - Consultar la reputación de otros usuarios y reportar problemas de convivencia.
 
-Los pagos y las entregas se acordarán directamente entre usuarios. El anfitrión elegirá si la dirección de su mesa es pública o se comparte únicamente con asistentes confirmados.
+Los pagos y las entregas se acordarán directamente entre usuarios. El anfitrión elegirá si la dirección de su mesa se comparte con todos los usuarios autenticados o únicamente con asistentes confirmados. El contenido denominado público será visible dentro de la comunidad autenticada.
 
 ## Disponibilidad prevista
 
@@ -23,7 +25,13 @@ El lanzamiento inicial está pensado para **México**, en **español**, con prec
 
 El repositorio contiene un proyecto Flutter vacío en `frontend/`, con plataformas Android e iOS, y un backend NestJS con entidades y API REST inicial para cuentas, perfiles, catálogo/biblioteca, mesas y anuncios. La integración del cliente móvil con esa API está pendiente.
 
+La obligación de iniciar sesión para todas las consultas ya está definida como regla de producto. El backend inicial aún permite consultas anónimas de perfiles, catálogo, mesas y anuncios; proteger esas rutas y actualizar su contrato OpenAPI sigue pendiente.
+
+La verificación automática al registrar cuentas fuera de producción también está acordada y pendiente de implementación. El registro actual todavía exige confirmar el correo en todos los entornos que admite el backend.
+
 La identidad visual y las pantallas están en preparación por el responsable del producto. Por ahora la aplicación muestra una superficie vacía; los componentes, estilos, temas y animaciones se definirán después. El correo real, mapa, chat, Socket.IO, BGG, notificaciones, reputación y moderación siguen pendientes.
+
+Las fuentes Jeko entregadas para la identidad visual ya están registradas como recursos locales del frontend. Su uso está documentado en la [guía del frontend](frontend/README.md); la aplicación aún no las aplica a pantallas ni a un tema global.
 
 ### Arranque rápido del frontend
 

@@ -12,3 +12,53 @@ dependencies:
 
 dev_dependencies:
   flutter_lints: ^6.0.0
+
+flutter:
+  fonts:
+    - family: Jeko
+      fonts:
+        - asset: assets/fonts/Jeko Thin.ttf
+          weight: 100
+        - asset: assets/fonts/Jeko Thin Italic.ttf
+          weight: 100
+          style: italic
+        - asset: assets/fonts/Jeko Extra Light.ttf
+          weight: 200
+        - asset: assets/fonts/Jeko Extra Light Italic.ttf
+          weight: 200
+          style: italic
+        - asset: assets/fonts/Jeko Light.ttf
+          weight: 300
+        - asset: assets/fonts/Jeko Light Italic.ttf
+          weight: 300
+          style: italic
+        - asset: assets/fonts/Jeko Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Jeko Regular Italic.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/Jeko Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Jeko Medium Italic.ttf
+          weight: 500
+          style: italic
+        - asset: assets/fonts/Jeko Semi Bold.ttf
+          weight: 600
+        - asset: assets/fonts/Jeko Semi Bold Italic.ttf
+          weight: 600
+          style: italic
+        - asset: assets/fonts/Jeko Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Jeko Bold Italic.ttf
+          weight: 700
+          style: italic
+        - asset: assets/fonts/Jeko Extra Bold.ttf
+          weight: 800
+        - asset: assets/fonts/Jeko Extra Bold Italic.ttf
+          weight: 800
+          style: italic
+        - asset: assets/fonts/Jeko Black.ttf
+          weight: 900
+        - asset: assets/fonts/Jeko Black Italic.ttf
+          weight: 900
+          style: italic

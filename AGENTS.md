@@ -22,6 +22,8 @@ Inspeccionar el estado real del repositorio antes de ejecutar comandos. El front
 - Backend: NestJS 12 con ESM, TypeORM, `mysql2` y MySQL 8.4 LTS; API REST bajo `/api/v1`. Socket.IO para chat queda pendiente.
 - No fijar versiones de Node.js ni npm en la raíz del repositorio; cada proyecto se ejecuta desde su propio directorio. Usar MySQL local, sin Docker.
 - Lanzamiento inicial en México, en español y con importes en MXN. Los pagos y las entregas se acuerdan entre usuarios.
+- El acceso a toda la plataforma, incluidas las consultas de mesas, anuncios, catálogo y perfiles, requiere cuenta activa, correo verificado y sesión válida. Sin sesión solo se permiten los flujos de registro, acceso, verificación y recuperación; la renovación exige su credencial y el health check no expone contenido de la plataforma. El contenido denominado público solo es visible para usuarios autenticados.
+- Verificación de correo según el entorno del backend: con `NODE_ENV=production` se exige confirmación por correo; fuera de producción (`development` y `test`) el correo se marca como verificado al crear la cuenta, sin generar token ni enviar correo de verificación. Esta adaptación del registro inicial está pendiente.
 
 Las instrucciones explícitas del usuario tienen prioridad sobre estas decisiones. Cualquier cambio acordado de arquitectura o producto debe reflejarse en la documentación correspondiente.
 
@@ -29,6 +31,7 @@ Las instrucciones explícitas del usuario tienen prioridad sobre estas decisione
 
 - Implementar el alcance solicitado, conservando las reglas detalladas de la definición del producto y la guía técnica.
 - Mantener la autorización y las reglas de negocio en el backend, incluyendo HTTP, Socket.IO y tareas de fondo.
+- Proteger por defecto todos los endpoints de producto, también los de lectura, con excepciones explícitas para los flujos de acceso y el health check. La adaptación de las consultas anónimas del backend inicial a esta regla está pendiente; no presentarla como implementada.
 - Confirmar lugares con transacciones; las solicitudes y ofertas parciales pendientes no reservan cupo. Una aprobación parcial requiere aceptación del titular y nueva comprobación de disponibilidad.
 - Proteger direcciones y coordenadas privadas en respuestas, mapas, eventos, notificaciones y logs. Revocar permisos cuando cambia la participación.
 - Habilitar reputación solo para experiencias elegibles: mesas finalizadas y operaciones de marketplace confirmadas por ambas partes.

@@ -4,6 +4,41 @@ Proyecto Flutter vacío, exclusivamente para Android e iOS. La aplicación muest
 
 La base se creó con Flutter 3.47.5 del canal estable y Dart 3.13.4. Las dependencias y su resolución se mantienen en `pubspec.yaml` y `pubspec.lock`; este directorio no utiliza npm. Los iconos y recursos nativos generados por Flutter son provisionales.
 
+## Fuentes tipográficas
+
+Los 19 archivos de Jeko están en `assets/fonts/`, junto a `lib/`, y se registran en la sección `flutter.fonts` de `pubspec.yaml`. Las rutas parten de ese archivo, según la [guía oficial de fuentes de Flutter](https://docs.flutter.dev/cookbook/design/fonts). Esta declaración incluye las fuentes en la aplicación; no es necesario repetirlas en `flutter.assets` ni configurarlas por separado en Android e iOS.
+
+La familia `Jeko` incluye estos pesos, cada uno con su archivo normal y su cursiva (`FontStyle.italic`):
+
+| Variante | Peso en Flutter |
+| --- | --- |
+| Thin | `FontWeight.w100` |
+| Extra Light | `FontWeight.w200` |
+| Light | `FontWeight.w300` |
+| Regular | `FontWeight.w400` |
+| Medium | `FontWeight.w500` |
+| Semi Bold | `FontWeight.w600` |
+| Bold | `FontWeight.w700` |
+| Extra Bold | `FontWeight.w800` |
+| Black | `FontWeight.w900` |
+
+Para usarla en un widget cuando se implementen las pantallas:
+
+```dart
+const Text(
+  'MeepleWorld',
+  style: TextStyle(
+    fontFamily: 'Jeko',
+    fontWeight: FontWeight.w700,
+    fontStyle: FontStyle.italic,
+  ),
+)
+```
+
+El archivo `Jeko Italic Variable.ttf` se conserva y está disponible mediante `fontFamily: 'JekoItalicVariable'`, con `FontWeight.w400` y `FontStyle.italic`. Aunque su nombre dice «Variable», el archivo entregado no contiene la tabla `fvar` de ejes de variación; se registra como una fuente fija independiente y no admite pesos variables mediante `FontVariation`.
+
+Después de modificar el registro, ejecuta `flutter pub get` desde `frontend/` y reinicia por completo la aplicación para cargar las fuentes nuevas. Las fuentes están disponibles como recursos locales; su asignación a textos y al tema global queda pendiente del diseño. La aplicación conserva su superficie vacía.
+
 ## Herramientas
 
 - Flutter del canal estable, con su SDK de Dart incluido. Consulta la [instalación oficial](https://docs.flutter.dev/install/manual).
