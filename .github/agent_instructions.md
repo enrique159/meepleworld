@@ -1,8 +1,8 @@
 # MeepleWorld: guía técnica e instrucciones para agentes
 
-Estado: frontend Flutter vacío para Android e iOS; backend REST inicial implementado. Última actualización: 1 de octubre de 2026.
+Estado: frontend Flutter con layout principal y enrutamiento inicial para Android e iOS; backend REST inicial implementado. Última actualización: 2 de octubre de 2026.
 
-Esta guía define cómo construir los proyectos del monorepo. Las reglas de negocio están en [idea_design.md](../documentation/idea_design.md) y la presentación del producto en el [README](../README.md). El frontend anterior se sustituyó por un proyecto Flutter vacío con Android e iOS. El backend NestJS conserva sus entidades, migración inicial y endpoints REST. Cada proyecto mantiene sus dependencias y lockfile en su propio directorio. La integración móvil, Socket.IO, correo real, BGG, mapa y el resto de las funciones siguen pendientes.
+Esta guía define cómo construir los proyectos del monorepo. Las reglas de negocio están en [idea_design.md](../documentation/idea_design.md) y la presentación del producto en el [README](../README.md). El frontend anterior se sustituyó por un proyecto Flutter con Android e iOS; ahora tiene el layout principal aprobado y rutas iniciales, sin contenido de producto. El backend NestJS conserva sus entidades, migración inicial y endpoints REST. Cada proyecto mantiene sus dependencias y lockfile en su propio directorio. La integración móvil, Socket.IO, correo real, BGG, mapa y el resto de las funciones siguen pendientes.
 
 ## 1. Decisiones técnicas
 
@@ -11,7 +11,7 @@ Esta guía define cómo construir los proyectos del monorepo. Las reglas de nego
 | Monorepo | Proyectos independientes `frontend` y `backend`; Flutter usa `pubspec.yaml`/`pubspec.lock` y NestJS usa `package.json`/`package-lock.json`. Sin npm workspaces ni paquete raíz. |
 | Entorno | Flutter del canal estable; el requisito de Dart se declara en `frontend/pubspec.yaml`. El repositorio no fija versiones de Node.js ni npm. MySQL se instala localmente. |
 | Lenguaje | Dart en el frontend y TypeScript con comprobaciones estrictas en el backend. |
-| Frontend | Flutter; proyecto vacío pendiente de identidad visual, pantallas e integración. |
+| Frontend | Flutter; layout principal con fondo radial aprobado, navegación con `go_router`; demás pantallas, autenticación e integración pendientes. |
 | Móviles | Android e iOS. La web y las aplicaciones de escritorio quedan fuera del alcance. |
 | Mapas | Mapbox para mapa y visualización de mesas; listado como vista complementaria. |
 | Backend | NestJS 12 con ESM y adaptador HTTP Express. |
@@ -20,9 +20,9 @@ Esta guía define cómo construir los proyectos del monorepo. Las reglas de nego
 | Acceso | Cuenta activa, correo verificado y sesión válida para toda la plataforma, incluidas las lecturas. Excepciones explícitas para flujos de acceso y health check. Adaptación del backend inicial pendiente. |
 | Verificación de correo | Confirmación por correo en producción; verificación automática al crear la cuenta con `NODE_ENV` distinto de `production` (`development` o `test`). Adaptación del registro inicial pendiente. |
 | Pruebas previstas | `flutter_test` e `integration_test` para el cliente cuando se implementen funcionalidades; Vitest y Supertest para el backend. |
-| Desarrollo local | Flutter/Dart, herramientas Android/iOS, dispositivo Android físico por USB, Node.js y MySQL instalados localmente; sin Docker ni Docker Compose. |
+| Desarrollo local | Flutter/Dart, herramientas Android/iOS, teléfono Android físico primero por USB y, si no está disponible, por Wi-Fi ya configurado; Node.js y MySQL instalados localmente; sin Docker ni Docker Compose. |
 
-MySQL 8.4 LTS sustituye la propuesta inicial de 8.3 por decisión del proyecto. El frontend mantiene `pubspec.lock` versionado y utiliza las herramientas incluidas en Flutter. Todavía no se han elegido paquetes de estado, navegación ni integraciones. No incorporarlos ni definir componentes, estilos, temas o animaciones de producto antes de que el responsable termine la identidad visual y las pantallas. El repositorio no fija versiones de Node.js ni npm. No introducir otro gestor de paquetes, ORM o framework sin actualizar la decisión y la documentación.
+MySQL 8.4 LTS sustituye la propuesta inicial de 8.3 por decisión del proyecto. El frontend mantiene `pubspec.lock` versionado y utiliza las herramientas incluidas en Flutter. La navegación usa `go_router` (18.0.2 en el lockfile), con una `ShellRoute` para el layout principal. Todavía no se han elegido paquetes de estado ni integraciones. Implementar solo el diseño autorizado: layout principal, fondo radial y rutas iniciales; esperar el diseño de las demás pantallas antes de definir componentes, estilos, temas o animaciones adicionales. El repositorio no fija versiones de Node.js ni npm. No introducir otro gestor de paquetes, ORM o framework sin actualizar la decisión y la documentación.
 
 NestJS 12 publica sus paquetes en ESM y su configuración de proyectos ESM utiliza Vitest; consultar la [guía de NestJS 12](https://docs.nestjs.com/migration-guide). Usar `type: module` y resolución `NodeNext` en el backend; respetar las extensiones de importación de su salida ESM.
 
@@ -36,14 +36,17 @@ meepleworld/
 │   └── idea_design.md
 ├── .github/
 │   └── agent_instructions.md
-├── frontend/                    # Flutter vacío, solo móvil
+├── frontend/                    # Flutter, solo móvil
 │   ├── pubspec.yaml
 │   ├── pubspec.lock
 │   ├── analysis_options.yaml
 │   ├── assets/
 │   │   └── fonts/              # archivos Jeko registrados en pubspec.yaml
 │   ├── lib/
-│   │   └── main.dart            # arranque y superficie vacía
+│   │   ├── main.dart            # arranque
+│   │   ├── app.dart             # WidgetsApp.router y ciclo de vida del router
+│   │   ├── routing/             # go_router: / dentro de la ShellRoute principal
+│   │   └── layouts/             # layout principal y fondo radial
 │   ├── android/                 # proyecto Android generado por Flutter
 │   └── ios/                     # proyecto iOS generado por Flutter
 └── backend/                     # NestJS independiente
@@ -63,13 +66,15 @@ Cada proyecto se instala, ejecuta y mantiene desde su propio directorio; no crea
 
 ## 3. Frontend
 
-El frontend `frontend/` arranca una superficie vacía con el nombre MeepleWorld. No contiene pantallas de producto, navegación, estado de negocio, servicios HTTP, temas personalizados ni integraciones. La identidad visual y el diseño de pantallas los prepara el responsable; mantener esta base vacía hasta recibir ese diseño y autorización para implementarlo.
+El frontend `frontend/` arranca con el nombre MeepleWorld y `WidgetsApp.router`. `lib/routing/app_router.dart` configura `go_router`: la ruta inicial `/`, con nombre `home`, muestra un contenido vacío dentro de una `ShellRoute` cuyo layout es `MainLayout`. El router se conserva durante la vida de la app y se libera al desmontarla. Las páginas futuras de producto compartirán ese layout; el layout de autenticación se añadirá en otro grupo de rutas. No contiene pantallas de producto, estado de negocio, servicios HTTP, temas personalizados ni integraciones.
+
+`MainLayout` configura las barras del sistema con iconos oscuros y reserva las zonas seguras para el contenido. `MainBackground` ocupa toda la superficie con un `RadialGradient`: `#DFC6FE` en 0% y `#F3E6EF` en 100%, opacos. Su centro está en la esquina superior derecha; una transformación orienta el eje mayor hacia la inferior izquierda y deja el menor a la mitad del mayor, aproximando la referencia recibida. La geometría se recalcula con los límites de la superficie. Este diseño y el enrutamiento inicial están autorizados; las demás pantallas esperarán al diseño del responsable.
 
 Las fuentes entregadas por el responsable están en `frontend/assets/fonts/` y registradas en `frontend/pubspec.yaml`: `Jeko` con pesos 100–900 normales y cursivos, y `JekoItalicVariable` como fuente fija cursiva independiente, porque el archivo no contiene ejes variables. Son recursos disponibles, todavía sin asignación a pantallas ni a un tema global. Los ejemplos de uso y el registro están documentados en [frontend/README.md](../frontend/README.md).
 
 El backend inicial está implementado en `backend/` con autenticación y recuperación de acceso, perfiles, catálogo/biblioteca, descubrimiento y publicación de mesas, participaciones, ubicación privada y anuncios. El contrato REST se mantiene en [openapi.yaml](../backend/openapi.yaml). El chat, Socket.IO, BGG, notificaciones, reputación, moderación y mapa siguen pendientes porque no hay contratos implementados para esas funciones.
 
-La regla de producto exige una sesión válida para entrar a cualquier vista de contenido. Al implementar navegación, comprobar o restaurar la sesión antes de abrir mesas, anuncios, catálogo, biblioteca, mapa o perfiles, también desde enlaces. Sin sesión mostrar únicamente los flujos de registro, acceso, verificación y recuperación. Si la renovación falla por expiración o revocación, volver al flujo de acceso y retirar el estado local de la cuenta y el contenido protegido. Este comportamiento todavía no existe en el frontend vacío.
+La regla de producto exige una sesión válida para entrar a cualquier vista de contenido. La apertura actual de `/` sin sesión es una vista provisional del layout vacío autorizada por el responsable; no representa autenticación ni consume contenido de la API. El layout de acceso y los controles de sesión siguen pendientes. Antes de incorporar mesas, anuncios, catálogo, biblioteca, mapa o perfiles, comprobar o restaurar la sesión, también desde enlaces. Sin sesión mostrar únicamente los flujos de registro, acceso, verificación y recuperación. Si la renovación falla por expiración o revocación, volver al flujo de acceso y retirar el estado local de la cuenta y el contenido protegido.
 
 Al comenzar la implementación móvil, separar presentación, estado y acceso a servicios; elegir entonces las dependencias necesarias. Consumir los contratos de la API mediante modelos Dart independientes del ORM. La autenticación móvil y el almacenamiento seguro de credenciales siguen pendientes.
 
@@ -198,7 +203,7 @@ Usar Argon2id para contraseñas. La API emitirá tokens de acceso de corta durac
 
 Guardar únicamente el hash del token de renovación en el servidor. Rotar al renovar, detectar reutilización y revocar la sesión comprometida. Cerrar sesión elimina la renovación; recuperación de contraseña y suspensión revocan sesiones. Proteger operaciones también con el estado vigente de la cuenta, sin depender solo del contenido de un JWT todavía válido.
 
-La API inicial entrega la renovación mediante una cookie HttpOnly, Secure en producción y con alcance limitado. Mantener esa protección mientras exista el transporte de cookies, incluyendo SameSite, CORS y protección CSRF según el despliegue. La adaptación del contrato al cliente móvil sigue pendiente; el frontend vacío no implementa sesiones.
+La API inicial entrega la renovación mediante una cookie HttpOnly, Secure en producción y con alcance limitado. Mantener esa protección mientras exista el transporte de cookies, incluyendo SameSite, CORS y protección CSRF según el despliegue. La adaptación del contrato al cliente móvil sigue pendiente; el frontend no implementa sesiones.
 
 En móviles, guardar la renovación mediante un adaptador de almacenamiento seguro basado en Keychain/Keystore; no usar preferencias sin cifrar para secretos. Elegir y verificar un paquete Flutter compatible antes de implementar ese adaptador y ajustar el transporte del backend cuando corresponda. Mantener el acceso en memoria y eliminar credenciales al cerrar sesión.
 
@@ -224,7 +229,7 @@ Persistir notificaciones internas después de confirmar la operación de negocio
 
 ## 9. Configuración
 
-El backend valida su configuración al iniciar y tiene `backend/.env.example`. El frontend vacío no tiene configuración de API ni archivos de entorno. Los nombres del cliente se definirán al implementar sus servicios; cualquier valor incluido en la aplicación debe considerarse extraíble y no contener secretos.
+El backend valida su configuración al iniciar y tiene `backend/.env.example`. El frontend no tiene configuración de API ni archivos de entorno. Los nombres del cliente se definirán al implementar sus servicios; cualquier valor incluido en la aplicación debe considerarse extraíble y no contener secretos.
 
 | Proyecto | Variables previstas | Uso |
 | --- | --- | --- |
@@ -245,7 +250,7 @@ Nunca versionar `.env`, credenciales push, certificados, llaves de firma móvil,
 
 Ejecutar Flutter desde `frontend/` y npm desde `backend/`. La base móvil se creó con Flutter 3.47.5 del canal estable y Dart 3.13.4; mantener el lockfile del frontend. El repositorio no fija versiones de Node.js ni npm. MySQL 8.4 LTS se ejecuta localmente. Los puertos de desarrollo son 3000 para NestJS y 3306 para MySQL; no hay servidor web del frontend.
 
-Para Android se necesitan Android Studio, un JDK compatible, SDK Platform 36, Build-Tools, Command-line Tools, NDK y un dispositivo físico conectado por USB, con depuración USB habilitada y el equipo autorizado. No usar emuladores Android. El proyecto usa los valores Android de Flutter: mínimo API 24, compilación/destino 36 y NDK 28.2.13676358 en esta versión. Para iOS se necesitan macOS, Xcode completo con herramientas y licencias configuradas y un simulador o dispositivo; CocoaPods permite incorporar plugins que lo requieran. El proyecto iOS generado declara iOS 15 como mínimo. Ver [instalación de Flutter](https://docs.flutter.dev/install/manual), [configuración Android](https://docs.flutter.dev/platform-integration/android/setup) y [configuración iOS](https://docs.flutter.dev/platform-integration/ios/setup).
+Para Android se necesitan Android Studio, un JDK compatible, SDK Platform 36, Build-Tools, Command-line Tools, NDK y un teléfono físico autorizado. Para depurar el frontend, buscar primero un Google Pixel u otro teléfono por USB; si no hay uno disponible, usar el dispositivo físico que ya tiene depuración por Wi-Fi configurada. No usar emuladores Android. El proyecto usa los valores Android de Flutter: mínimo API 24, compilación/destino 36 y NDK 28.2.13676358 en esta versión. Para iOS se necesitan macOS, Xcode completo con herramientas y licencias configuradas y un simulador o dispositivo; CocoaPods permite incorporar plugins que lo requieran. El proyecto iOS generado declara iOS 15 como mínimo. Ver [instalación de Flutter](https://docs.flutter.dev/install/manual), [configuración Android](https://docs.flutter.dev/platform-integration/android/setup) y [configuración iOS](https://docs.flutter.dev/platform-integration/ios/setup).
 
 Verificar los requisitos de Mapbox y los paquetes elegidos antes de confirmar los destinos mínimos definitivos. La firma y las cuentas de las tiendas están pendientes y deberán configurarse sin incluir secretos en Git. La plantilla Android usa firma de depuración; no representa una configuración de publicación.
 
@@ -256,7 +261,7 @@ Usar `flutter doctor -v` para comprobar la instalación. Generar `ios/` no confi
 | `frontend/` | `flutter pub get` | Resolver dependencias utilizando `pubspec.lock`. |
 | `frontend/` | `dart format --output=none --set-exit-if-changed lib` | Comprobar el formato del código Dart. |
 | `frontend/` | `flutter analyze` | Comprobar tipos y reglas de análisis/lint. |
-| `frontend/` | `flutter devices` | Listar destinos disponibles; para Android, seleccionar el dispositivo físico conectado. |
+| `frontend/` | `flutter devices` | Listar destinos disponibles; para Android, seleccionar primero un teléfono físico por USB y, si no hay uno, el ya configurado por Wi-Fi. |
 | `frontend/` | `flutter run -d <id>` | Compilar y ejecutar en el dispositivo móvil seleccionado. |
 | `frontend/` | `flutter build apk --debug` | Compilar un APK de desarrollo. |
 | `frontend/` | `flutter build ios --simulator` | Compilar para simulador iOS con Xcode configurado. |
@@ -272,11 +277,11 @@ Usar `flutter doctor -v` para comprobar la instalación. Generar `ios/` no confi
 | `backend/` | `npm test` | Futuro: ejecutar las pruebas cuando se implementen. |
 | `frontend/` | `flutter test` | Futuro: ejecutar las pruebas cuando existan funcionalidades y suite. |
 
-Los directorios nativos forman parte del frontend; cachés, rutas locales y artefactos de compilación están excluidos de Git mediante sus archivos `.gitignore`. Los iconos y recursos de arranque generados son provisionales y no definen la identidad visual. La base vacía no necesita una conexión al backend para arrancar.
+Los directorios nativos forman parte del frontend; cachés, rutas locales y artefactos de compilación están excluidos de Git mediante sus archivos `.gitignore`. Los iconos y recursos de arranque generados son provisionales y no definen la identidad visual. El layout principal no necesita una conexión al backend para arrancar.
 
 ## 11. Verificación
 
-Las pruebas de negocio deben cubrir reglas con efecto real. No exigir pruebas que únicamente reflejen el texto de esta documentación. El frontend usa `flutter analyze` y comprobación de formato; verificar también compilación y ejecución móvil cuando las herramientas estén disponibles. La base vacía no tiene una suite Dart de pruebas. El backend cuenta con comprobación de tipos y compilación; su suite sigue pendiente. Los escenarios siguientes corresponden a funcionalidades futuras del cliente.
+Las pruebas de negocio deben cubrir reglas con efecto real. No exigir pruebas que únicamente reflejen el texto de esta documentación. El frontend usa `flutter analyze` y comprobación de formato; verificar también compilación y ejecución móvil cuando las herramientas estén disponibles. El frontend no tiene una suite Dart de pruebas. El backend cuenta con comprobación de tipos y compilación; su suite sigue pendiente. Los escenarios siguientes corresponden a funcionalidades futuras del cliente.
 
 - Con MySQL de pruebas y migraciones reales: competencia por el último lugar, grupos con acompañantes, aprobación parcial sin cupo, reintentos y cancelación doble. No usar SQLite como sustituto para verificar bloqueos de MySQL.
 - API y Socket.IO: rechazo de lecturas de producto sin sesión válida, excepciones de acceso explícitas, cuenta sin verificar o suspendida, permisos de autor y asistente, omisión de coordenadas privadas en proyecciones compartidas y revocación durante una conexión abierta.
@@ -286,7 +291,7 @@ Las pruebas de negocio deben cubrir reglas con efecto real. No exigir pruebas qu
 - Sesiones: verificación, recuperación de un solo uso, renovación rotada, reutilización, cierre de sesión, autorización tras revocación y retiro del contenido protegido del estado local cuando termina la sesión.
 - Registro por entorno: en `development` y `test`, verificación persistida al crear la cuenta, respuesta `emailVerified: true`/`verificationEmailQueued: false`, ausencia de token y envío de verificación e inicio de sesión inmediato. En producción, cuenta sin verificar y acceso denegado hasta consumir el token. Usar un adaptador de correo controlado en pruebas y comprobar que la recuperación funciona en ambos casos.
 
-Para cambios del frontend, comprobar formato, análisis estático y compilación móvil según disponibilidad. Para cambios del backend, ejecutar sus checks configurados de tipos y compilación. El frontend vacío no consume ningún endpoint; las funcionalidades REST existentes siguen en el backend. Registrar por separado APK compilado, ejecución en dispositivo físico Android y verificación iOS. No afirmar que iOS fue verificado si falta Xcode ni que push funciona sin haber integrado y probado su entrega.
+Para cambios del frontend, comprobar formato, análisis estático y compilación móvil según disponibilidad. Para cambios del backend, ejecutar sus checks configurados de tipos y compilación. El frontend no consume ningún endpoint; las funcionalidades REST existentes siguen en el backend. Registrar por separado APK compilado, ejecución en dispositivo físico Android (USB o Wi-Fi) y verificación iOS. No afirmar que iOS fue verificado si falta Xcode ni que push funciona sin haber integrado y probado su entrega.
 
 ## 12. Forma de trabajo para agentes
 

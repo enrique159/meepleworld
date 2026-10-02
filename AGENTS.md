@@ -10,15 +10,15 @@ Antes de modificar el proyecto, leer:
 2. [Guía técnica](.github/agent_instructions.md): arquitectura, versiones, datos, integraciones y verificación.
 3. [README](README.md): presentación y estado general del proyecto.
 
-Inspeccionar el estado real del repositorio antes de ejecutar comandos. El frontend es un proyecto Flutter vacío para Android e iOS, pendiente de identidad visual, pantallas e integración con la API. El backend NestJS conserva sus entidades y endpoints iniciales para cuentas, perfiles, catálogo/biblioteca, mesas y anuncios; la guía técnica distingue lo implementado de lo previsto.
+Inspeccionar el estado real del repositorio antes de ejecutar comandos. El frontend Flutter para Android e iOS tiene un layout principal con fondo radial y enrutamiento inicial; las pantallas, la autenticación móvil y la integración con la API están pendientes. El backend NestJS conserva sus entidades y endpoints iniciales para cuentas, perfiles, catálogo/biblioteca, mesas y anuncios; la guía técnica distingue lo implementado de lo previsto.
 
 ## Decisiones del proyecto
 
 - Mantener el nombre **MeepleWorld** y la documentación en español.
 - Mantener los proyectos `frontend` y `backend` independientes: Flutter con `pubspec.yaml` y `pubspec.lock`; NestJS con `package.json` y `package-lock.json`. No usar npm workspaces ni un `package.json` en la raíz.
 - Frontend: Flutter y Dart, canal estable, exclusivamente para Android e iOS. La web queda fuera del alcance.
-- Verificar Android en un dispositivo físico conectado por USB; no usar emuladores Android.
-- Mantener el frontend vacío hasta que el responsable termine la identidad visual y el diseño de pantallas; no adelantar componentes, estilos, temas ni animaciones de producto.
+- Para depurar y verificar el frontend Android, buscar primero un dispositivo físico conectado por USB (Google Pixel u otro teléfono). Si no hay uno disponible por USB, usar el teléfono físico que ya está configurado para depuración por Wi-Fi. No usar emuladores Android.
+- Implementar únicamente el diseño autorizado por el responsable: ya están aprobados el layout principal, su fondo radial y el enrutamiento inicial. Por ahora `/` abre ese layout sin contenido ni sesión; el layout de autenticación queda pendiente. No adelantar otras pantallas, componentes, estilos, temas ni animaciones de producto.
 - Backend: NestJS 12 con ESM, TypeORM, `mysql2` y MySQL 8.4 LTS; API REST bajo `/api/v1`. Socket.IO para chat queda pendiente.
 - No fijar versiones de Node.js ni npm en la raíz del repositorio; cada proyecto se ejecuta desde su propio directorio. Usar MySQL local, sin Docker.
 - Lanzamiento inicial en México, en español y con importes en MXN. Los pagos y las entregas se acuerdan entre usuarios.

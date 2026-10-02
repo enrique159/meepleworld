@@ -23,13 +23,13 @@ El lanzamiento inicial está pensado para **México**, en **español**, con prec
 
 ## Estado del proyecto
 
-El repositorio contiene un proyecto Flutter vacío en `frontend/`, con plataformas Android e iOS, y un backend NestJS con entidades y API REST inicial para cuentas, perfiles, catálogo/biblioteca, mesas y anuncios. La integración del cliente móvil con esa API está pendiente.
+El repositorio contiene un frontend Flutter en `frontend/`, con plataformas Android e iOS, layout principal y enrutamiento inicial, y un backend NestJS con entidades y API REST inicial para cuentas, perfiles, catálogo/biblioteca, mesas y anuncios. La integración del cliente móvil con esa API está pendiente.
 
 La obligación de iniciar sesión para todas las consultas ya está definida como regla de producto. El backend inicial aún permite consultas anónimas de perfiles, catálogo, mesas y anuncios; proteger esas rutas y actualizar su contrato OpenAPI sigue pendiente.
 
 La verificación automática al registrar cuentas fuera de producción también está acordada y pendiente de implementación. El registro actual todavía exige confirmar el correo en todos los entornos que admite el backend.
 
-La identidad visual y las pantallas están en preparación por el responsable del producto. Por ahora la aplicación muestra una superficie vacía; los componentes, estilos, temas y animaciones se definirán después. El correo real, mapa, chat, Socket.IO, BGG, notificaciones, reputación y moderación siguen pendientes.
+La ruta `/` muestra provisionalmente el layout principal sin contenido, con el fondo radial aprobado (`#DFC6FE` → `#F3E6EF`). La navegación usa `go_router`; el layout de autenticación y la comprobación de sesión móvil están pendientes. La identidad visual y las demás pantallas siguen en preparación por el responsable del producto. El correo real, mapa, chat, Socket.IO, BGG, notificaciones, reputación y moderación siguen pendientes.
 
 Las fuentes Jeko entregadas para la identidad visual ya están registradas como recursos locales del frontend. Su uso está documentado en la [guía del frontend](frontend/README.md); la aplicación aún no las aplica a pantallas ni a un tema global.
 

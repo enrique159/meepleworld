@@ -1,6 +1,6 @@
 # Backend de MeepleWorld
 
-API inicial construida con NestJS 12, TypeORM y MySQL. Las rutas de cuentas, perfiles, catálogo/biblioteca, mesas y anuncios están disponibles; el nuevo frontend Flutter permanece vacío y su integración está pendiente. Chat, Socket.IO, BGG, reputación, moderación y proveedores de correo/push reales siguen pendientes.
+API inicial construida con NestJS 12, TypeORM y MySQL. Las rutas de cuentas, perfiles, catálogo/biblioteca, mesas y anuncios están disponibles; el frontend Flutter tiene un layout principal con enrutamiento inicial y su integración está pendiente. Chat, Socket.IO, BGG, reputación, moderación y proveedores de correo/push reales siguen pendientes.
 
 La [regla de acceso del producto](../documentation/idea_design.md) exige cuenta activa, correo verificado y sesión válida para toda la plataforma, incluidas las lecturas. Aplicarla a todas las consultas del backend inicial está pendiente; el estado actual se detalla abajo.
 
