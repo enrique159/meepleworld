@@ -1,8 +1,8 @@
 import 'package:flutter/widgets.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:meepleworld/core/ui/widgets/glass_container.dart';
 
-import '../components/glass_container.dart';
-import 'main_section.dart';
+import '../navigation/main_section.dart';
 
 class MainBottomNavigationBar extends StatelessWidget {
   const MainBottomNavigationBar({

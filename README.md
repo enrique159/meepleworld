@@ -31,6 +31,8 @@ La verificación automática al registrar cuentas fuera de producción también 
 
 La ruta `/` abre Inicio dentro del layout principal, con el fondo radial aprobado (`#DFC6FE` → `#F3E6EF`) y un menú inferior flotante para Inicio, Mesas, Marketplace, Mensajes y Mi Perfil. Las cinco vistas muestran un título para identificar la sección abierta. Inicio añade una cabecera con «La Paz» y el SVG personalizado de ubicación, más dos botones de icono para búsqueda y notificaciones; reutiliza el estilo de vidrio del menú. La ciudad es provisional y las acciones de esos botones están pendientes. La navegación usa `go_router` e iconos de HugeIcons; el contenedor de vidrio del menú es reutilizable. El layout de autenticación, la comprobación de sesión móvil y el contenido de las pantallas están pendientes. El correo real, mapa, chat, Socket.IO, BGG, notificaciones, reputación y moderación siguen pendientes.
 
+El código Flutter está organizado por funcionalidades: `app` compone el arranque, el router y el shell principal; `core` reúne los componentes compartidos; `features` contiene las pantallas y widgets de cada módulo. La arquitectura y las convenciones de nombres están documentadas en las [reglas del frontend](.github/frontend/rules.md#arquitectura-organización-y-nombres).
+
 Las fuentes Jeko entregadas para la identidad visual ya están registradas como recursos locales del frontend. Su uso está documentado en la [guía del frontend](frontend/README.md); los títulos provisionales usan Jeko, sin un tema global.
 
 ### Arranque rápido del frontend

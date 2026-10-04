@@ -6,9 +6,17 @@ Las decisiones técnicas, el alcance autorizado y las instrucciones de implement
 
 La base se creó con Flutter 3.47.5 del canal estable y Dart 3.13.4. Las dependencias y su resolución se mantienen en `pubspec.yaml` y `pubspec.lock`; este directorio no utiliza npm. Los iconos y recursos nativos generados por Flutter son provisionales.
 
+## Arquitectura
+
+La organización implementada separa `lib/app/` (arranque, router y shell global), `lib/core/` (componentes e infraestructura compartidos) y `lib/features/` (módulos de Inicio, Mesas, Marketplace, Mensajes y Perfil). Cada funcionalidad separa sus pantallas en `presentation/screens/` y sus componentes en `presentation/widgets/`; estado y acceso a datos se incorporarán cuando exista comportamiento real. La presentación con estado seguirá MVVM y los casos de uso serán opcionales.
+
+Los nombres de pantallas usan el sufijo `Screen`, con archivos como `home_screen.dart`; `home_header.dart` está dentro de los widgets de Inicio. Los archivos y carpetas usan `snake_case` y los tipos `UpperCamelCase`. Las responsabilidades, límites de dependencia, convenciones están en [arquitectura del frontend](../.github/frontend/rules.md#arquitectura-organización-y-nombres).
+
+La refactorización de los 17 archivos Dart existentes está completada; las carpetas globales anteriores fueron retiradas. Las capas de estado, datos y dominio y las carpetas de pruebas se crearán cuando haya código que las necesite. Los apartados siguientes describen esta estructura y sus rutas actuales.
+
 ## Layout principal y rutas
 
-`lib/main.dart` inicia `MeepleWorldApp`, definida en `lib/app.dart` con `WidgetsApp.router`. La configuración está en `lib/routing/app_router.dart` y usa [`go_router`](https://pub.dev/packages/go_router), actualmente resuelto a 18.0.2. Las cinco rutas pertenecen a una `ShellRoute` que envuelve sus páginas en `MainLayout`, sin transiciones. Las constantes están en `lib/routing/app_routes.dart` y cada vista tiene su archivo en `lib/views/`:
+`lib/main.dart` inicia `MeepleWorldApp`, definida en `lib/app/meeple_world_app.dart` con `WidgetsApp.router`. La configuración está en `lib/app/router/app_router.dart` y usa [`go_router`](https://pub.dev/packages/go_router), actualmente resuelto a 18.0.2. Las cinco rutas pertenecen a una `ShellRoute` que envuelve sus páginas en `MainShell`, sin transiciones. Las constantes están en `lib/app/router/app_routes.dart` y cada pantalla tiene su archivo en `lib/features/<feature>/presentation/screens/`:
 
 | Sección | Ruta | Nombre de ruta |
 | --- | --- | --- |
@@ -18,37 +26,37 @@ La base se creó con Flutter 3.47.5 del canal estable y Dart 3.13.4. Las depende
 | Mensajes | `/mensajes` | `messages` |
 | Mi Perfil | `/mi-perfil` | `profile` |
 
-Todas las vistas muestran su título y comparten fondo y menú; Inicio incorpora además su cabecera. `lib/views/section_placeholder.dart` centraliza ese título provisional: centrado en el área de contenido restante, con Jeko de 24 píxeles lógicos, peso 600 y color `#1B1B1B`, marcado como encabezado para accesibilidad. El futuro layout de autenticación tendrá un grupo separado; no se han definido rutas ni pantallas de acceso todavía.
+Todas las vistas muestran su título y comparten fondo y menú; Inicio incorpora además su cabecera. `lib/core/ui/widgets/section_placeholder.dart` centraliza ese título provisional: centrado en el área de contenido restante, con Jeko de 24 píxeles lógicos, peso 600 y color `#1B1B1B`, marcado como encabezado para accesibilidad. El futuro layout de autenticación tendrá un grupo separado; no se han definido rutas ni pantallas de acceso todavía.
 
-`lib/layouts/main_layout.dart` reserva las zonas seguras y el espacio del menú para el contenido, y configura iconos oscuros en las barras del sistema. `lib/layouts/main_background.dart` dibuja el fondo con un `RadialGradient` de Flutter, sin imágenes: `#DFC6FE` en 0% y `#F3E6EF` en 100%, ambos totalmente opacos. El centro está en la esquina superior derecha; el eje mayor llega a la inferior izquierda y el eje menor mide la mitad. Esa proporción aproxima la elipse de la referencia recibida y se adapta al tamaño y orientación de la pantalla. El fondo ocupa toda la superficie, incluidas las zonas detrás de las barras del sistema.
+`lib/app/shell/main_shell.dart` reserva las zonas seguras y el espacio del menú para el contenido, y configura iconos oscuros en las barras del sistema. `lib/app/shell/widgets/main_background.dart` dibuja el fondo con un `RadialGradient` de Flutter, sin imágenes: `#DFC6FE` en 0% y `#F3E6EF` en 100%, ambos totalmente opacos. El centro está en la esquina superior derecha; el eje mayor llega a la inferior izquierda y el eje menor mide la mitad. Esa proporción aproxima la elipse de la referencia recibida y se adapta al tamaño y orientación de la pantalla. El fondo ocupa toda la superficie, incluidas las zonas detrás de las barras del sistema.
 
 La apertura directa de estas rutas es una presentación provisional autorizada para trabajar el diseño: no crea ni simula una sesión y no consulta contenido protegido. La autenticación móvil, el layout de acceso y la redirección según sesión siguen pendientes. La regla de producto de exigir una sesión válida se aplicará antes de incorporar contenido de la plataforma.
 
 ## Menú flotante y contenedor de vidrio
 
-`lib/navigation/main_bottom_navigation_bar.dart` mantiene el menú fijo en la parte inferior, con 24 píxeles lógicos de margen lateral y 16 sobre el límite inferior de la zona segura. Su ancho máximo es de 400; el diámetro de los botones se adapta al ancho, entre 48 y 72. Los cinco iconos siempre están visibles; solo la sección activa tiene el círculo blanco. La selección se obtiene de la ruta actual mediante `MainSection`, y los toques usan `context.go` para cambiar de sección sin acumular pestañas en la pila de navegación. Cada botón expone su etiqueta y selección a accesibilidad, sin añadir texto visible al diseño.
+`lib/app/shell/widgets/main_bottom_navigation_bar.dart` mantiene el menú fijo en la parte inferior, con 24 píxeles lógicos de margen lateral y 16 sobre el límite inferior de la zona segura. Su ancho máximo es de 400; el diámetro de los botones se adapta al ancho, entre 48 y 72. Los cinco iconos siempre están visibles; solo la sección activa tiene el círculo blanco. La selección se obtiene de la ruta actual mediante `MainSection`, y los toques usan `context.go` para cambiar de sección sin acumular pestañas en la pila de navegación. Cada botón expone su etiqueta y selección a accesibilidad, sin añadir texto visible al diseño.
 
 La dependencia [`hugeicons`](https://pub.dev/packages/hugeicons), resuelta a 1.2.0, aporta `strokeRoundedHome02`, `strokeRoundedTableRound`, `strokeRoundedStore01`, `strokeRoundedMessageSquare` y `strokeRoundedUser`. Se dibujan con `HugeIcon` a 28 píxeles lógicos, color `#1B1B1B` y trazo de 1.7.
 
-`lib/components/glass_container.dart` permite reutilizar la superficie aprobada en futuros componentes:
+`lib/core/ui/widgets/glass_container.dart` permite reutilizar la superficie aprobada en futuros componentes:
 
 - Fondo blanco al 30% de opacidad.
 - Blur del contenido de fondo mediante `BackdropFilter` con sigma 8 en ambos ejes, recortado al contenedor.
 - Borde de 1 píxel lógico con degradado lineal `#F1E7FC` en la esquina superior izquierda y `#DFC7FE` en la inferior derecha.
 - Parámetros `child`, `borderRadius` y `padding`; el menú usa radio de cápsula y padding de 6.
 
-El borde se pinta únicamente sobre el contorno, sin aplicar su degradado al interior. `lib/components/glass_button.dart` reutiliza esta superficie para los botones de la cabecera, con forma de cápsula, altura de 56 y una etiqueta semántica. No se han incorporado animaciones.
+El borde se pinta únicamente sobre el contorno, sin aplicar su degradado al interior. `lib/core/ui/widgets/glass_button.dart` reutiliza esta superficie para los botones de la cabecera, con forma de cápsula, altura de 56 y una etiqueta semántica. No se han incorporado animaciones.
 
 ## Cabecera de Inicio
 
-`lib/views/home_header.dart` muestra tres botones sobre el mismo fondo, con 24 píxeles lógicos de margen lateral y 16 de margen superior dentro de la zona segura:
+`lib/features/home/presentation/widgets/home_header.dart` muestra tres botones sobre el mismo fondo, con 24 píxeles lógicos de margen lateral y 16 de margen superior dentro de la zona segura:
 
-- Una cápsula a la izquierda con el icono personalizado `assets/custom/location_filled.svg` y «La Paz» en Jeko de 18, peso 600. El SVG mantiene su degradado original y el texto usa elipsis si el ancho disponible es pequeño.
+- Una cápsula a la izquierda con el icono personalizado `assets/custom/location_filled.svg` y «La Paz» con el archivo Jeko Semi Bold a 18. El SVG mantiene su degradado original y el texto usa elipsis si el ancho disponible es pequeño.
 - Dos botones circulares a la derecha, de 56 de diámetro, con `HugeIcons.strokeRoundedSearch01` y `HugeIcons.strokeRoundedNotification01`, tamaño 24, trazo 1.7 y etiquetas accesibles «Buscar» y «Notificaciones».
 
 El SVG está registrado en `pubspec.yaml` y se carga con [`flutter_svg`](https://pub.dev/packages/flutter_svg), resuelto a 2.3.0 y declarado como dependencia directa; HugeIcons ya lo utilizaba de forma transitiva. La ciudad es un dato visual provisional, sin geolocalización ni consulta a la API. Los tres botones carecen de acciones conectadas y se anuncian como deshabilitados a accesibilidad; los flujos de selección de ciudad, búsqueda y notificaciones siguen pendientes.
 
-El texto de ciudad usa el alias `JekoSemiBold`, registrado con el archivo `Jeko Semi Bold.ttf`. Los archivos Jeko inspeccionados declaran internamente peso 400, incluso Medium, Semi Bold y Bold; el alias con un único archivo evita que la cabecera resuelva una variante más fina al seleccionar peso 600. El registro de la familia general `Jeko` se conserva.
+El texto de ciudad usa el alias `JekoSemiBold`, registrado con el archivo `Jeko Semi Bold.ttf`. Los archivos Jeko inspeccionados declaran internamente peso 400, incluso Medium, Semi Bold y Bold; el alias con un único archivo evita que la cabecera resuelva una variante más fina al resolver la familia tipográfica. El registro de la familia general `Jeko` se conserva.
 
 ## Fuentes tipográficas
 

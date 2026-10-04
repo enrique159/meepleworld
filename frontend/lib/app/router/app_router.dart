@@ -1,12 +1,12 @@
 import 'package:go_router/go_router.dart';
+import 'package:meepleworld/features/home/presentation/screens/home_screen.dart';
+import 'package:meepleworld/features/marketplace/presentation/screens/marketplace_screen.dart';
+import 'package:meepleworld/features/messages/presentation/screens/messages_screen.dart';
+import 'package:meepleworld/features/profile/presentation/screens/profile_screen.dart';
+import 'package:meepleworld/features/tables/presentation/screens/tables_screen.dart';
 
-import '../layouts/main_layout.dart';
-import '../navigation/main_section.dart';
-import '../views/home_view.dart';
-import '../views/marketplace_view.dart';
-import '../views/messages_view.dart';
-import '../views/profile_view.dart';
-import '../views/tables_view.dart';
+import '../shell/main_shell.dart';
+import '../shell/navigation/main_section.dart';
 import 'app_routes.dart';
 
 GoRouter createAppRouter() {
@@ -17,7 +17,7 @@ GoRouter createAppRouter() {
       ShellRoute(
         pageBuilder: (context, state, child) => NoTransitionPage<void>(
           key: state.pageKey,
-          child: MainLayout(
+          child: MainShell(
             selectedSection: MainSection.fromPath(state.uri.path),
             onSectionSelected: (section) => context.go(section.path),
             child: child,
@@ -29,7 +29,7 @@ GoRouter createAppRouter() {
             name: AppRoutes.homeName,
             pageBuilder: (context, state) => NoTransitionPage<void>(
               key: state.pageKey,
-              child: const HomeView(),
+              child: const HomeScreen(),
             ),
           ),
           GoRoute(
@@ -37,7 +37,7 @@ GoRouter createAppRouter() {
             name: AppRoutes.tablesName,
             pageBuilder: (context, state) => NoTransitionPage<void>(
               key: state.pageKey,
-              child: const TablesView(),
+              child: const TablesScreen(),
             ),
           ),
           GoRoute(
@@ -45,7 +45,7 @@ GoRouter createAppRouter() {
             name: AppRoutes.marketplaceName,
             pageBuilder: (context, state) => NoTransitionPage<void>(
               key: state.pageKey,
-              child: const MarketplaceView(),
+              child: const MarketplaceScreen(),
             ),
           ),
           GoRoute(
@@ -53,7 +53,7 @@ GoRouter createAppRouter() {
             name: AppRoutes.messagesName,
             pageBuilder: (context, state) => NoTransitionPage<void>(
               key: state.pageKey,
-              child: const MessagesView(),
+              child: const MessagesScreen(),
             ),
           ),
           GoRoute(
@@ -61,7 +61,7 @@ GoRouter createAppRouter() {
             name: AppRoutes.profileName,
             pageBuilder: (context, state) => NoTransitionPage<void>(
               key: state.pageKey,
-              child: const ProfileView(),
+              child: const ProfileScreen(),
             ),
           ),
         ],

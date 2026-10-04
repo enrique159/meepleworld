@@ -1,6 +1,6 @@
 import 'package:hugeicons/hugeicons.dart';
 
-import '../routing/app_routes.dart';
+import '../../router/app_routes.dart';
 
 enum MainSection {
   home('Inicio', AppRoutes.home, HugeIcons.strokeRoundedHome02),

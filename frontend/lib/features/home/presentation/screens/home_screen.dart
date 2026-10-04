@@ -1,10 +1,10 @@
 import 'package:flutter/widgets.dart';
+import 'package:meepleworld/core/ui/widgets/section_placeholder.dart';
 
-import 'home_header.dart';
-import 'section_placeholder.dart';
+import '../widgets/home_header.dart';
 
-class HomeView extends StatelessWidget {
-  const HomeView({super.key});
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

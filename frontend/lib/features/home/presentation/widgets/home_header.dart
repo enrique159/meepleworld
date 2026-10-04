@@ -1,8 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hugeicons/hugeicons.dart';
-
-import '../components/glass_button.dart';
+import 'package:meepleworld/core/ui/widgets/glass_button.dart';
 
 /// Cabecera visual de Inicio; las acciones se conectarán con sus futuros flujos.
 class HomeHeader extends StatelessWidget {

@@ -1,12 +1,12 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
-import '../navigation/main_bottom_navigation_bar.dart';
-import '../navigation/main_section.dart';
-import 'main_background.dart';
+import 'navigation/main_section.dart';
+import 'widgets/main_background.dart';
+import 'widgets/main_bottom_navigation_bar.dart';
 
-class MainLayout extends StatelessWidget {
-  const MainLayout({
+class MainShell extends StatelessWidget {
+  const MainShell({
     required this.child,
     required this.selectedSection,
     required this.onSectionSelected,

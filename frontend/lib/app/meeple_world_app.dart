@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-import 'routing/app_router.dart';
+import 'router/app_router.dart';
 
 class MeepleWorldApp extends StatefulWidget {
   const MeepleWorldApp({super.key});
