@@ -8,6 +8,8 @@ import { DatabaseService } from '../database/database.service.js'
 import { EmailVerificationTokenEntity, PasswordResetTokenEntity } from '../database/entities/one-time-token.entity.js'
 import { UserSessionEntity } from '../database/entities/session.entity.js'
 import { UserEntity, UserStatus } from '../database/entities/user.entity.js'
+import { isDuplicateKeyError } from '../database/mysql-errors.js'
+import { generateUsername, USERNAME_GENERATION_ATTEMPTS } from '../users/username.js'
 import { MailboxService } from './mailbox.service.js'
 import type { LoginDto, RegisterDto, ResetPasswordDto } from './auth.dto.js'
 
@@ -20,6 +22,7 @@ const PASSWORD_HASH_OPTIONS: argon2.Options = {
 
 export interface AuthUserView {
   id: string
+  username: string
   displayName: string
   email: string
   emailVerified: boolean
@@ -44,37 +47,14 @@ export class AuthService {
     private readonly mailbox: MailboxService,
   ) {}
 
-  async register(input: RegisterDto): Promise<{ userId: string; email: string; emailVerified: false; verificationEmailQueued: true }> {
+  async register(input: RegisterDto): Promise<{ userId: string; username: string; email: string; emailVerified: false; verificationEmailQueued: true }> {
     const email = input.email.trim().toLowerCase()
     const now = new Date()
     const token = randomBytes(32).toString('base64url')
     const expiresAt = new Date(now.getTime() + 30 * 60_000)
 
-    const user = await this.database.dataSource.transaction(async (manager) => {
-      const users = manager.getRepository(UserEntity)
-      if (await users.findOne({ where: { email }, select: { id: true } })) throw new ConflictException('Ya existe una cuenta con ese correo.')
-
-      const createdUser = users.create({
-        id: randomUUID(),
-        displayName: input.displayName.trim(),
-        email,
-        passwordHash: await argon2.hash(input.password, PASSWORD_HASH_OPTIONS),
-        avatarUrl: null,
-        city: null,
-        emailVerifiedAt: null,
-        status: UserStatus.ACTIVE,
-      })
-      await users.save(createdUser)
-      await manager.getRepository(EmailVerificationTokenEntity).save({
-        id: randomUUID(),
-        userId: createdUser.id,
-        tokenHash: hashToken(token),
-        expiresAt,
-        consumedAt: null,
-        revokedAt: null,
-      })
-      return createdUser
-    })
+    const passwordHash = await argon2.hash(input.password, PASSWORD_HASH_OPTIONS)
+    const user = await this.createRegisteredUser(input, email, passwordHash, token, expiresAt)
 
     try {
       await this.mailbox.queue(email, 'verify-email', token, expiresAt)
@@ -82,7 +62,44 @@ export class AuthService {
       throw new ServiceUnavailableException('No se pudo preparar el mensaje local de verificación. Puedes volver a solicitarlo.')
     }
 
-    return { userId: user.id, email: user.email, emailVerified: false, verificationEmailQueued: true }
+    return { userId: user.id, username: user.username, email: user.email, emailVerified: false, verificationEmailQueued: true }
+  }
+
+  private async createRegisteredUser(input: RegisterDto, email: string, passwordHash: string, token: string, expiresAt: Date): Promise<UserEntity> {
+    for (let attempt = 0; attempt < USERNAME_GENERATION_ATTEMPTS; attempt++) {
+      try {
+        return await this.database.dataSource.transaction(async (manager) => {
+          const users = manager.getRepository(UserEntity)
+          if (await users.findOne({ where: { email }, select: { id: true } })) throw new ConflictException('Ya existe una cuenta con ese correo.')
+
+          const createdUser = users.create({
+            id: randomUUID(),
+            username: generateUsername(),
+            displayName: input.displayName.trim(),
+            email,
+            passwordHash,
+            avatarUrl: null,
+            city: null,
+            emailVerifiedAt: null,
+            status: UserStatus.ACTIVE,
+          })
+          await users.save(createdUser)
+          await manager.getRepository(EmailVerificationTokenEntity).save({
+            id: randomUUID(),
+            userId: createdUser.id,
+            tokenHash: hashToken(token),
+            expiresAt,
+            consumedAt: null,
+            revokedAt: null,
+          })
+          return createdUser
+        })
+      } catch (error) {
+        if (isDuplicateKeyError(error, 'uq_users_email')) throw new ConflictException('Ya existe una cuenta con ese correo.')
+        if (!isDuplicateKeyError(error, 'uq_users_username')) throw error
+      }
+    }
+    throw new ServiceUnavailableException('No se pudo generar un username disponible. Intenta registrarte de nuevo.')
   }
 
   async login(input: LoginDto): Promise<SessionTokens> {
@@ -138,7 +155,7 @@ export class AuthService {
 
       const user = await manager.getRepository(UserEntity).findOne({
         where: { id: session.userId },
-        select: { id: true, displayName: true, email: true, avatarUrl: true, city: true, emailVerifiedAt: true, status: true, role: true },
+        select: { id: true, username: true, displayName: true, email: true, avatarUrl: true, city: true, emailVerifiedAt: true, status: true, role: true },
       })
       if (!user || user.status !== UserStatus.ACTIVE || !user.emailVerifiedAt) {
         session.revokedAt = new Date()
@@ -283,6 +300,7 @@ function hashToken(token: string): string {
 function toAuthUser(user: UserEntity): AuthUserView {
   return {
     id: user.id,
+    username: user.username,
     displayName: user.displayName,
     email: user.email,
     emailVerified: Boolean(user.emailVerifiedAt),

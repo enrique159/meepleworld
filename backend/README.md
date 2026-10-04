@@ -45,6 +45,7 @@ Con el cambio previsto, las cuentas nuevas de desarrollo y pruebas se crearán c
 - `GET /api/v1/health`
 - `POST /api/v1/auth/register`, `/login`, `/refresh`, `/logout`, `/verify-email`, `/verification/resend`, `/password/forgot`, `/password/reset`, `GET /me`
 - `GET /api/v1/users/:id`, `GET /api/v1/users/me`, `PATCH /api/v1/users/me`
+- `GET /api/v1/users/username/:username` (sesión de una cuenta activa y con correo verificado; consulta exacta)
 - `GET /api/v1/games`, `GET /api/v1/games/:id`, `POST /api/v1/games`
 - `GET /api/v1/library`, `POST /api/v1/library`, `DELETE /api/v1/library/:gameId`
 - `GET /api/v1/tables`, `GET /api/v1/tables/:id`, `GET /api/v1/tables/:id/location`, `POST /api/v1/tables`, `PATCH /api/v1/tables/:id`, `POST /api/v1/tables/:id/cancel`
@@ -67,6 +68,27 @@ npm run migration:run
 npm run migration:revert
 npm run typecheck
 npm run build
+npm test
 ```
 
 El esquema se administra solo mediante migraciones; TypeORM mantiene `synchronize: false`.
+
+### Username
+
+La migración `AddUserUsername1791072000000` crea `users.username` con índice único, asigna uno a cada cuenta anterior sin alterar su UUID ni fecha de edición y vuelve la columna obligatoria. Detén el backend y ejecuta `npm run migration:run` antes de iniciar esta versión. Revertir esa migración elimina los usernames; requiere volver a un backend compatible con el esquema anterior.
+
+El registro genera `user` + timestamp Unix en milisegundos + cinco dígitos aleatorios, por ejemplo `user179107200000012345`. MySQL garantiza la unicidad y el registro reintenta las colisiones. No se permite elegirlo en `POST /auth/register`. El username aparece en la respuesta de registro, login, renovación, sesión actual y perfiles.
+
+Para personalizarlo, envía `PATCH /api/v1/users/me` con `{ "username": "Enrique_plays" }`. Se recortan espacios exteriores y se guarda `enrique_plays`: entre 3 y 32 letras ASCII, números y guion bajo. No admite `null`, espacios interiores ni otros signos. Si está ocupado, devuelve `409` con `code: "USERNAME_TAKEN"` y no modifica ningún campo del perfil. El UUID interno permanece igual; el nombre anterior deja de resolver el perfil y queda disponible.
+
+`GET /api/v1/users/username/enrique_plays` permite encontrar el perfil compartido por su identificador exacto, con sesión y correo verificado. Solo entrega cuentas activas y verificadas, sin correo ni credenciales; la consulta normaliza mayúsculas y devuelve `404` si el perfil no está disponible. El frontend para editar, buscar y compartir sigue pendiente, así como la búsqueda parcial y las amistades.
+
+### Pruebas de username
+
+`npm test` compila y ejecuta pruebas de generación, validación, actualización parcial y reintentos con el runner de Node.js, sin nuevas dependencias. La prueba de MySQL/HTTP se omite por defecto. Para ejecutarla, inicia una instancia local temporal y aislada de MySQL con socket Unix, usuario `root` sin contraseña y sin datos del proyecto, e indica su socket:
+
+```sh
+MEEPLEWORLD_TEST_MYSQL_SOCKET=/ruta/temporal/mysql.sock npm test
+```
+
+La prueba no carga `.env`: crea una base aleatoria `meepleworld_username_test_*`, ejecuta migraciones, usa datos ficticios y elimina su propia base al terminar. Comprueba el relleno/reanudación/reversión de la migración, unicidad concurrente, normalización, errores HTTP, privacidad y propagación a las sesiones. La instancia temporal debe ser compatible con MySQL 8.4 LTS; en esta entrega se verificó con el binario local disponible, MySQL 8.0.38. ESLint y las suites generales con Vitest/Supertest siguen pendientes.

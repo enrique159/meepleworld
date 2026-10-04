@@ -39,7 +39,7 @@ export class AccessTokenGuard implements CanActivate {
 
     const user = await this.database.dataSource.getRepository(UserEntity).findOne({
       where: { id: subject },
-      select: { id: true, displayName: true, email: true, avatarUrl: true, city: true, emailVerifiedAt: true, status: true, role: true },
+      select: { id: true, username: true, displayName: true, email: true, avatarUrl: true, city: true, emailVerifiedAt: true, status: true, role: true },
     })
     if (!user) throw new UnauthorizedException()
     if (user.status !== UserStatus.ACTIVE) throw new ForbiddenException('La cuenta no está activa.')

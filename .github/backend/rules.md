@@ -15,7 +15,7 @@ Estas reglas se aplican a `backend/` y a sus contratos, datos e integraciones. L
 | Contratos | API REST bajo `/api/v1`, documentada con OpenAPI; Socket.IO para chat está pendiente. |
 | Acceso | Cuenta activa, correo verificado y sesión válida para toda la plataforma, incluidas las lecturas; excepciones explícitas para flujos de acceso y health check. Adaptación del backend inicial pendiente. |
 | Verificación de correo | Confirmación por correo en producción; verificación automática de cuentas nuevas en `development` y `test`. Adaptación del registro inicial pendiente. |
-| Pruebas previstas | Vitest y Supertest; la suite y la configuración de lint están pendientes. |
+| Pruebas | Suite focalizada de `username` con el runner de Node.js y MySQL temporal opcional. Vitest/Supertest para el resto y la configuración de lint siguen pendientes. |
 
 MySQL 8.4 LTS sustituye la propuesta inicial de 8.3 por decisión del proyecto. NestJS 12 publica sus paquetes en ESM y su configuración de proyectos ESM utiliza Vitest; consultar la [guía de NestJS 12](https://docs.nestjs.com/migration-guide). Usar `type: module` y resolución `NodeNext`; respetar las extensiones de importación de su salida ESM. No introducir otro gestor de paquetes, ORM o framework sin actualizar la decisión y la documentación.
 
@@ -84,7 +84,7 @@ La migración inicial de `backend/` crea usuarios, sesiones y tokens de un solo 
 
 | Entidad o conjunto | Relaciones y responsabilidad |
 | --- | --- |
-| Usuario y perfil | Correo único normalizado, hash de contraseña, verificación, estado, nombre visible, avatar y ciudad. Permisos administrativos separados de la propiedad de una mesa. |
+| Usuario y perfil | Correo único normalizado, `username` único normalizado, hash de contraseña, verificación, estado, nombre visible, avatar y ciudad. Permisos administrativos separados de la propiedad de una mesa. |
 | Sesión y tokens de cuenta | Varias sesiones por usuario, renovación revocable y tokens de verificación o recuperación de un solo uso. Guardar hashes de tokens sensibles. |
 | Juego | Registro local con nombre, metadatos e identificador BGG opcional y único cuando exista. |
 | Entrada de biblioteca | Relación usuario-juego única, procedencia manual o BGG y datos de importación sin credenciales BGG del usuario. |
@@ -104,6 +104,16 @@ Usar InnoDB y `utf8mb4`. Mantener índices para relaciones, estados y filtros po
 Mantener `synchronize: false` en todos los entornos y modificar el esquema exclusivamente con migraciones TypeORM versionadas. Separar credenciales y base de pruebas de la base de desarrollo. Las semillas serán explícitas, reproducibles y con datos ficticios.
 
 ## Invariantes de negocio
+
+### Identificador de usuario
+
+`users.username` es `VARCHAR(32) NOT NULL` con índice único `uq_users_username` y collation `utf8mb4_unicode_ci`. El UUID sigue identificando las relaciones y la autenticación. Al registrar, generar `user` + `Date.now()` en milisegundos + cinco dígitos mediante `crypto.randomInt`, rellenando con ceros; reintentar hasta cinco veces ante un conflicto de ese índice y devolver `503` si no se logra asignar uno. La transacción debe revertir la cuenta y su token antes de cada reintento; no reintentar por errores ajenos al username. El registro no acepta un username elegido por el cliente.
+
+`PATCH /users/me` permite cambiarlo por un valor de 3–32 caracteres ASCII (`a-z`, `0-9`, `_`), sin espacios interiores; recortar espacios exteriores y convertir a minúsculas antes de validar. Omitirlo conserva el valor actual; `null` y cadena vacía son inválidos. Actualizar solo los campos enviados en una misma sentencia, y traducir el conflicto de unicidad a `409` con código `USERNAME_TAKEN` sin cambios parciales. Se puede guardar el propio username; todas las cuentas, incluso suspendidas o cerradas, participan en la unicidad. Al cambiarlo, el nombre previo queda disponible; no conservar alias históricos.
+
+Incluirlo en registro, login, renovación, sesión actual y perfiles propios/compartidos. `GET /users/username/:username` realiza una consulta exacta normalizada con `AccessTokenGuard` y `VerifiedEmailGuard`, y solo entrega perfiles de cuentas activas y verificadas, sin correo ni credenciales. La consulta por UUID conserva su contrato actual y la protección global de las lecturas iniciales sigue pendiente. No añadir búsqueda parcial ni amistades por esta funcionalidad.
+
+La migración `AddUserUsername1791072000000` agrega la columna y el índice, rellena los registros anteriores por lotes y después exige `NOT NULL`. Conserva UUID y `updated_at`, reintenta colisiones y puede reanudar el relleno después de una interrupción. Aplicarla con el backend detenido antes de iniciar la nueva versión; revertirla elimina los usernames y exige volver al código compatible. No ejecutar migraciones de pruebas contra la base de desarrollo ni datos ajenos.
 
 ### Cupo y confirmaciones
 
@@ -210,11 +220,11 @@ Mantener `package-lock.json` y ejecutar los comandos desde `backend/`. MySQL 8.4
 | `npm run migration:revert` | Revertir la última migración, cuando sea reversible y esté autorizado. |
 | `npm run build` | Compilar el backend. |
 | `npm run lint` | Pendiente: definir y configurar ESLint. |
-| `npm test` | Futuro: ejecutar las pruebas cuando se implementen. |
+| `npm test` | Compilar y ejecutar la suite focalizada de `username` con Node.js. La integración MySQL se omite si no se indica `MEEPLEWORLD_TEST_MYSQL_SOCKET`. |
 
 ## Verificación
 
-Ejecutar las comprobaciones configuradas de tipos y compilación para cambios del backend. La suite de pruebas y ESLint siguen pendientes; sus comandos futuros no deben presentarse como disponibles. Al implementar pruebas de negocio, cubrir reglas con efecto real con datos ficticios y adaptadores controlados.
+Ejecutar las comprobaciones configuradas de tipos, compilación y pruebas para cambios del backend. La suite de `username` verifica validación, colisiones y proyecciones con adaptadores controlados; la integración opcional verifica migraciones reales, unicidad concurrente y recorridos HTTP en una base temporal que crea y elimina. No carga `.env`; requiere un socket local de MySQL temporal con usuario `root` sin contraseña. Ver [backend/README.md](../../backend/README.md#pruebas-de-username). ESLint y la cobertura general con Vitest/Supertest siguen pendientes; sus comandos futuros no deben presentarse como disponibles. Cubrir reglas con efecto real con datos ficticios y adaptadores controlados.
 
 Los siguientes escenarios guían las pruebas de las capacidades correspondientes; su inclusión no acredita que exista una suite ni que todas las funciones estén implementadas:
 

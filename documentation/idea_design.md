@@ -43,13 +43,19 @@ Los permisos de usuarios, anfitriones, autores y administradores requieren una c
 | Editar mesa, resolver solicitudes o cerrar anuncio | No | No, salvo que sea el autor | Sí, en su contenido | Puede intervenir para moderar |
 | Calificar | No | Solo con una experiencia habilitada | Solo con una experiencia habilitada | Puede moderar calificaciones |
 
-Los perfiles visibles para otros usuarios autenticados mostrarán nombre visible, avatar, ciudad y reputación. El correo, las credenciales y la ubicación personal precisa no formarán parte de ese perfil compartido.
+Los perfiles visibles para otros usuarios autenticados mostrarán `username`, nombre visible, avatar, ciudad y reputación. El correo, las credenciales y la ubicación personal precisa no formarán parte de ese perfil compartido.
 
 ## 3. Primera versión
 
 La primera versión incluirá cuentas y perfiles, biblioteca, mesas con mapa y listado, asistencia con acompañantes, marketplace, chat, notificaciones internas y push móvil, reportes, bloqueo y reputación. Los pagos se acordarán fuera de MeepleWorld y no habrá comisiones ni procesamiento de pagos en este alcance.
 
 ### 3.1. Cuentas y biblioteca
+
+Cada cuenta tendrá un `username` único para identificar y compartir su perfil y servir de base a la búsqueda de usuarios y las futuras amistades. El servidor lo generará al registrarse con `user` + timestamp Unix en milisegundos + cinco dígitos aleatorios (incluidos ceros iniciales); si coincide con otro, reintentará. Las cuentas existentes recibirán uno mediante una migración.
+
+El usuario podrá personalizarlo al editar su cuenta: entre 3 y 32 caracteres, letras de `a` a `z`, números y guion bajo. Se retirarán los espacios exteriores y se guardará en minúsculas; no habrá dos cuentas con el mismo identificador aunque se escriba con distintas mayúsculas. Un nombre ocupado o inválido no cambiará el perfil. El `username` será independiente del nombre visible y del UUID interno; cambiarlo conservará la cuenta, las sesiones y sus relaciones, pero el nombre anterior dejará de resolver ese perfil y podrá asignarse de nuevo.
+
+La API permite consultar un perfil por su `username` exacto y vigente con sesión de una cuenta activa y verificada. La interfaz móvil para editarlo, compartirlo y buscarlo aún está pendiente; esta base no incorpora relaciones de amistad ni búsqueda parcial.
 
 El usuario se registrará con correo y contraseña e iniciará sesión con el correo verificado antes de acceder a cualquier contenido de la plataforma. En producción deberá confirmar su correo mediante un enlace de verificación. Si el backend no está en producción, el correo quedará verificado automáticamente en el momento de crear la cuenta, sin generar token ni enviar correo de verificación; podrá iniciar sesión inmediatamente después del registro.
 
@@ -205,6 +211,10 @@ Si antes de aceptar otra participación ocupa uno de los lugares, la aceptación
 
 | Escenario | Resultado esperado |
 | --- | --- |
+| Se crea una cuenta o se migra una cuenta existente | Recibe un `username` automático y único, con timestamp en milisegundos y cinco dígitos aleatorios. |
+| Usuario personaliza su `username` | Se valida el formato y se guarda en minúsculas; conserva el UUID y las relaciones de la cuenta. |
+| Dos cuentas eligen simultáneamente el mismo `username` | Solo una lo obtiene; la otra recibe `409` con código `USERNAME_TAKEN`, sin cambios parciales en el perfil. |
+| Se consulta por el `username` vigente | Una cuenta activa, verificada y con sesión obtiene el perfil compartido sin correo ni credenciales; un nombre inexistente o una cuenta no visible devuelve `404`. |
 | Persona sin sesión abre la app o un enlace a contenido | Accede al flujo de cuenta; no puede ver mesas, anuncios, catálogo, mapa ni perfiles hasta iniciar sesión con una cuenta activa y verificada. |
 | Consulta directa a un endpoint de producto sin autenticación válida | La API responde `401` sin entregar contenido, incluso en listados, detalles y perfiles. |
 | Se crea una cuenta con el backend fuera de producción | El correo queda verificado al crearla, sin token ni envío de verificación; el usuario puede iniciar sesión inmediatamente con sus credenciales. |
@@ -228,6 +238,8 @@ Si antes de aceptar otra participación ocupa uno de los lugares, la aceptación
 | Una cuenta bloqueada intenta abrir un nuevo chat privado | La operación se impide; los reportes siguen disponibles. |
 
 ## 8. Evolución y pendientes
+
+El `username` está implementado en el backend: generación durante el registro, migración de cuentas existentes, edición del perfil, respuestas de sesión/perfiles y consulta exacta autenticada por nombre. La migración debe aplicarse en cada base al actualizar el backend. Los formularios móviles, enlaces compartidos, búsqueda parcial y relaciones de amistad siguen pendientes.
 
 Las cinco tarjetas de Inicio incluyen un efecto visual de presión autorizado: escala `0.95` con transición de 150 ms y regreso al tamaño original al soltar o cancelar el gesto. Se respeta la preferencia del sistema de desactivar animaciones. Las acciones de producto de esos accesos siguen pendientes.
 

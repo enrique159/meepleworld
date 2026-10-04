@@ -13,9 +13,13 @@ export enum UserRole {
 
 @Entity({ name: 'users' })
 @Index('idx_users_status', ['status'])
+@Index('uq_users_username', ['username'], { unique: true })
 export class UserEntity {
   @PrimaryColumn('char', { length: 36 })
   id!: string
+
+  @Column({ type: 'varchar', length: 32, collation: 'utf8mb4_unicode_ci' })
+  username!: string
 
   @Column({ type: 'varchar', length: 120, name: 'display_name' })
   displayName!: string

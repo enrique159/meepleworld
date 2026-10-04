@@ -24,20 +24,28 @@ paths:
   /auth/register:
     post:
       operationId: register
+      description: El servidor asigna un username único con user, timestamp Unix en milisegundos y cinco dígitos aleatorios. No se recibe username en el registro.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              additionalProperties: false
               required: [displayName, email, password]
               properties:
                 displayName: { type: string, minLength: 1, maxLength: 120 }
                 email: { type: string, format: email }
                 password: { type: string, minLength: 12, maxLength: 128 }
       responses:
-        '201': { description: Cuenta creada; debe verificarse el correo antes de iniciar sesión. }
+        '201':
+          description: Cuenta creada con username automático; debe verificarse el correo antes de iniciar sesión.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RegistrationResponse' }
+        '400': { $ref: '#/components/responses/ApiError' }
         '409': { $ref: '#/components/responses/ApiError' }
+        '503': { $ref: '#/components/responses/ApiError' }
   /auth/login:
     post:
       operationId: login
@@ -56,12 +64,19 @@ paths:
           description: Token de acceso en JSON y renovación rotada en cookie HttpOnly.
           headers:
             Set-Cookie: { schema: { type: string } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SessionResponse' }
         '401': { $ref: '#/components/responses/ApiError' }
   /auth/refresh:
     post:
       operationId: refreshSession
       responses:
-        '200': { description: Emite un nuevo access token y rota la cookie HttpOnly. }
+        '200':
+          description: Emite un nuevo access token y rota la cookie HttpOnly.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SessionResponse' }
         '401': { $ref: '#/components/responses/ApiError' }
   /auth/logout:
     post:
@@ -74,7 +89,11 @@ paths:
       operationId: getCurrentSession
       security: [{ bearerAuth: [] }]
       responses:
-        '200': { description: Usuario autenticado. }
+        '200':
+          description: Usuario autenticado, incluido su username vigente.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PrivateProfile' }
   /auth/verify-email:
     post:
       operationId: verifyEmail
@@ -122,7 +141,11 @@ paths:
       operationId: getMyProfile
       security: [{ bearerAuth: [] }]
       responses:
-        '200': { description: Perfil privado del usuario autenticado. }
+        '200':
+          description: Perfil privado del usuario autenticado.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PrivateProfile' }
     patch:
       operationId: updateMyProfile
       security: [{ bearerAuth: [] }]
@@ -132,14 +155,49 @@ paths:
           application/json:
             schema: { $ref: '#/components/schemas/UpdateProfile' }
       responses:
-        '200': { description: Perfil actualizado. }
+        '200':
+          description: Perfil actualizado; el username se guarda en minúsculas, sin espacios exteriores. El UUID permanece igual.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PrivateProfile' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '409':
+          description: Username ocupado por otra cuenta, con code USERNAME_TAKEN. No se modifica el perfil.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+  /users/username/{username}:
+    get:
+      operationId: getProfileByUsername
+      description: Consulta exacta por username vigente, normalizado a minúsculas. Exige sesión de una cuenta activa y verificada; no incluye relaciones de amistad ni búsqueda parcial.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: username
+          required: true
+          schema: { $ref: '#/components/schemas/UsernameInput' }
+      responses:
+        '200':
+          description: Perfil compartido sin correo ni datos de acceso.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PublicProfile' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '401': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '404': { $ref: '#/components/responses/ApiError' }
   /users/{id}:
     get:
       operationId: getPublicProfile
       parameters:
         - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
       responses:
-        '200': { description: Perfil público sin correo ni datos de acceso. }
+        '200':
+          description: Perfil público sin correo ni datos de acceso.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PublicProfile' }
         '404': { $ref: '#/components/responses/ApiError' }
   /games:
     get:
@@ -374,10 +432,66 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
+    ApiError:
+      type: object
+      required: [code, message, requestId]
+      properties:
+        code: { type: string }
+        message: { type: string }
+        requestId: { type: string, format: uuid }
+    Username:
+      type: string
+      minLength: 3
+      maxLength: 32
+      pattern: '^[a-z0-9_]+$'
+      description: Identificador único normalizado; independiente del UUID y del nombre visible. La unicidad no distingue mayúsculas.
+      example: user179107200000012345
+    UsernameInput:
+      type: string
+      pattern: '^\s*[A-Za-z0-9_]{3,32}\s*$'
+      description: Entre 3 y 32 letras ASCII, números o guion bajo después de retirar espacios exteriores. Se convierte a minúsculas; no admite null.
+      example: Enrique_plays
+    RegistrationResponse:
+      type: object
+      required: [userId, username, email, emailVerified, verificationEmailQueued]
+      properties:
+        userId: { type: string, format: uuid }
+        username: { $ref: '#/components/schemas/Username' }
+        email: { type: string, format: email }
+        emailVerified: { type: boolean, const: false }
+        verificationEmailQueued: { type: boolean, const: true }
+    PrivateProfile:
+      type: object
+      required: [id, username, displayName, email, emailVerified, avatarUrl, city]
+      properties:
+        id: { type: string, format: uuid }
+        username: { $ref: '#/components/schemas/Username' }
+        displayName: { type: string }
+        email: { type: string, format: email }
+        emailVerified: { type: boolean }
+        avatarUrl: { type: [string, 'null'], format: uri }
+        city: { type: [string, 'null'] }
+    PublicProfile:
+      type: object
+      required: [id, username, displayName, avatarUrl, city, memberSince]
+      properties:
+        id: { type: string, format: uuid }
+        username: { $ref: '#/components/schemas/Username' }
+        displayName: { type: string }
+        avatarUrl: { type: [string, 'null'], format: uri }
+        city: { type: [string, 'null'] }
+        memberSince: { type: string, format: date-time }
+    SessionResponse:
+      type: object
+      required: [accessToken, user]
+      properties:
+        accessToken: { type: string }
+        user: { $ref: '#/components/schemas/PrivateProfile' }
     UpdateProfile:
       type: object
       additionalProperties: false
       properties:
+        username: { $ref: '#/components/schemas/UsernameInput' }
         displayName: { type: string, minLength: 1, maxLength: 120 }
         city: { type: [string, 'null'], maxLength: 120 }
         avatarUrl: { type: [string, 'null'], format: uri }
@@ -498,9 +612,4 @@ components:
       content:
         application/json:
           schema:
-            type: object
-            required: [code, message, requestId]
-            properties:
-              code: { type: string }
-              message: { type: string }
-              requestId: { type: string, format: uuid }
+            $ref: '#/components/schemas/ApiError'
