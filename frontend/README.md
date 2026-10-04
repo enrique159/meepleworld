@@ -1,16 +1,43 @@
 # Frontend de MeepleWorld
 
-Proyecto Flutter exclusivamente para Android e iOS, con layout principal y enrutamiento inicial. La ruta `/` muestra el fondo radial aprobado, sin texto, controles ni integración con el backend. Las demás pantallas, componentes, estilos, temas y animaciones se definirán cuando el responsable entregue su diseño.
+Proyecto Flutter exclusivamente para Android e iOS, con layout principal y navegación entre cinco vistas provisionales. La ruta `/` abre Inicio con el fondo radial y el menú inferior flotante aprobados. El contenido de las pantallas, la autenticación y la integración con el backend están pendientes; los demás componentes, estilos, temas y animaciones se definirán cuando el responsable entregue su diseño.
+
+Las decisiones técnicas, el alcance autorizado y las instrucciones de implementación se mantienen en las [reglas del frontend](../.github/frontend/rules.md).
 
 La base se creó con Flutter 3.47.5 del canal estable y Dart 3.13.4. Las dependencias y su resolución se mantienen en `pubspec.yaml` y `pubspec.lock`; este directorio no utiliza npm. Los iconos y recursos nativos generados por Flutter son provisionales.
 
 ## Layout principal y rutas
 
-`lib/main.dart` inicia `MeepleWorldApp`, definida en `lib/app.dart` con `WidgetsApp.router`. La configuración está en `lib/routing/app_router.dart` y usa [`go_router`](https://pub.dev/packages/go_router), actualmente resuelto a 18.0.2. La ruta inicial `/`, con nombre `home`, pertenece a una `ShellRoute` que envuelve sus páginas en `MainLayout`. Las páginas de este grupo compartirán el fondo; el futuro layout de autenticación tendrá un grupo separado. No se han definido rutas ni pantallas de acceso todavía.
+`lib/main.dart` inicia `MeepleWorldApp`, definida en `lib/app.dart` con `WidgetsApp.router`. La configuración está en `lib/routing/app_router.dart` y usa [`go_router`](https://pub.dev/packages/go_router), actualmente resuelto a 18.0.2. Las cinco rutas pertenecen a una `ShellRoute` que envuelve sus páginas en `MainLayout`, sin transiciones. Las constantes están en `lib/routing/app_routes.dart` y cada vista tiene su archivo en `lib/views/`:
 
-`lib/layouts/main_layout.dart` reserva las zonas seguras para el contenido y configura iconos oscuros en las barras del sistema. `lib/layouts/main_background.dart` dibuja el fondo con un `RadialGradient` de Flutter, sin imágenes: `#DFC6FE` en 0% y `#F3E6EF` en 100%, ambos totalmente opacos. El centro está en la esquina superior derecha; el eje mayor llega a la inferior izquierda y el eje menor mide la mitad. Esa proporción aproxima la elipse de la referencia recibida y se adapta al tamaño y orientación de la pantalla. El fondo ocupa toda la superficie, incluidas las zonas detrás de las barras del sistema.
+| Sección | Ruta | Nombre de ruta |
+| --- | --- | --- |
+| Inicio (inicial) | `/` | `home` |
+| Mesas | `/mesas` | `tables` |
+| Marketplace | `/marketplace` | `marketplace` |
+| Mensajes | `/mensajes` | `messages` |
+| Mi Perfil | `/mi-perfil` | `profile` |
 
-La apertura directa de `/` es una vista provisional autorizada para trabajar el diseño: no crea ni simula una sesión y no consulta contenido protegido. La autenticación móvil, el layout de acceso y la redirección según sesión siguen pendientes. La regla de producto de exigir una sesión válida se aplicará antes de incorporar contenido de la plataforma.
+Todas las vistas muestran únicamente su título y comparten fondo y menú. `lib/views/section_placeholder.dart` centraliza ese título provisional: centrado en el área de contenido, con Jeko de 24 píxeles lógicos, peso 600 y color `#1B1B1B`, marcado como encabezado para accesibilidad. El futuro layout de autenticación tendrá un grupo separado; no se han definido rutas ni pantallas de acceso todavía.
+
+`lib/layouts/main_layout.dart` reserva las zonas seguras y el espacio del menú para el contenido, y configura iconos oscuros en las barras del sistema. `lib/layouts/main_background.dart` dibuja el fondo con un `RadialGradient` de Flutter, sin imágenes: `#DFC6FE` en 0% y `#F3E6EF` en 100%, ambos totalmente opacos. El centro está en la esquina superior derecha; el eje mayor llega a la inferior izquierda y el eje menor mide la mitad. Esa proporción aproxima la elipse de la referencia recibida y se adapta al tamaño y orientación de la pantalla. El fondo ocupa toda la superficie, incluidas las zonas detrás de las barras del sistema.
+
+La apertura directa de estas rutas es una presentación provisional autorizada para trabajar el diseño: no crea ni simula una sesión y no consulta contenido protegido. La autenticación móvil, el layout de acceso y la redirección según sesión siguen pendientes. La regla de producto de exigir una sesión válida se aplicará antes de incorporar contenido de la plataforma.
+
+## Menú flotante y contenedor de vidrio
+
+`lib/navigation/main_bottom_navigation_bar.dart` mantiene el menú fijo en la parte inferior, con 24 píxeles lógicos de margen lateral y 16 sobre el límite inferior de la zona segura. Su ancho máximo es de 400; el diámetro de los botones se adapta al ancho, entre 48 y 72. Los cinco iconos siempre están visibles; solo la sección activa tiene el círculo blanco. La selección se obtiene de la ruta actual mediante `MainSection`, y los toques usan `context.go` para cambiar de sección sin acumular pestañas en la pila de navegación. Cada botón expone su etiqueta y selección a accesibilidad, sin añadir texto visible al diseño.
+
+La dependencia [`hugeicons`](https://pub.dev/packages/hugeicons), resuelta a 1.2.0, aporta `strokeRoundedHome02`, `strokeRoundedTableRound`, `strokeRoundedStore01`, `strokeRoundedMessageSquare` y `strokeRoundedUser`. Se dibujan con `HugeIcon` a 28 píxeles lógicos, color `#1B1B1B` y trazo de 1.7.
+
+`lib/components/glass_container.dart` permite reutilizar la superficie aprobada en futuros componentes:
+
+- Fondo blanco al 30% de opacidad.
+- Blur del contenido de fondo mediante `BackdropFilter` con sigma 8 en ambos ejes, recortado al contenedor.
+- Borde de 1 píxel lógico con degradado lineal `#F1E7FC` en la esquina superior izquierda y `#DFC7FE` en la inferior derecha.
+- Parámetros `child`, `borderRadius` y `padding`; el menú usa radio de cápsula y padding de 6.
+
+El borde se pinta únicamente sobre el contorno, sin aplicar su degradado al interior. No se han incorporado otros botones de producto ni animaciones.
 
 ## Fuentes tipográficas
 
@@ -45,7 +72,7 @@ const Text(
 
 El archivo `Jeko Italic Variable.ttf` se conserva y está disponible mediante `fontFamily: 'JekoItalicVariable'`, con `FontWeight.w400` y `FontStyle.italic`. Aunque su nombre dice «Variable», el archivo entregado no contiene la tabla `fvar` de ejes de variación; se registra como una fuente fija independiente y no admite pesos variables mediante `FontVariation`.
 
-Después de modificar el registro, ejecuta `flutter pub get` desde `frontend/` y reinicia por completo la aplicación para cargar las fuentes nuevas. Las fuentes están disponibles como recursos locales; su asignación a textos y al tema global queda pendiente del diseño. El layout principal aún no contiene texto.
+Después de modificar el registro, ejecuta `flutter pub get` desde `frontend/` y reinicia por completo la aplicación para cargar las fuentes nuevas. Los títulos provisionales ya utilizan Jeko. Su aplicación al resto de textos y al tema global queda pendiente del diseño.
 
 ## Herramientas
 
@@ -102,6 +129,10 @@ flutter build ios --simulator
 No hay suite Dart de pruebas ni funcionalidades de producto. Las pruebas se incorporarán cuando exista comportamiento que verificar. Verificación local del 1 de octubre de 2026: formato y `flutter analyze` pasaron; `flutter build apk --debug` generó el APK y `flutter doctor -v` confirmó las herramientas Android y sus licencias. La app se compiló, instaló y ejecutó mediante `flutter run` en un Pixel 8a físico con Android 17 (API 37), autorizado por USB. Tras volver a abrirla, ADB confirmó su proceso activo y `MainActivity` en primer plano. La compilación iOS sigue pendiente.
 
 Verificación del layout y rutas del 2 de octubre de 2026: `dart format --output=none --set-exit-if-changed lib` y `flutter analyze` pasaron; `flutter build apk --debug` generó el APK. Al no haber un teléfono por USB, se compiló, instaló y ejecutó la versión final en el Pixel 8a físico por la conexión Wi-Fi ya configurada. Una captura del dispositivo permitió comprobar el fondo radial a pantalla completa y los iconos oscuros del sistema; ADB confirmó el proceso activo y el arranque no mostró errores de Flutter. Los enlaces locales de la documentación y `git diff --check` también pasaron. No se ha verificado iOS.
+
+Verificación del menú flotante del 2 de octubre de 2026: formato y `flutter analyze` pasaron; `flutter build apk --debug` generó el APK y `flutter run --debug --no-resident` lo instaló y ejecutó en el Pixel 8a físico por Wi-Fi, al no haber un teléfono conectado por USB. Se tocaron Mesas, Marketplace, Mensajes, Mi Perfil e Inicio, y la jerarquía de accesibilidad confirmó en cada paso una única sección seleccionada y los cinco botones visibles. Las capturas de Inicio y Mi Perfil permitieron revisar el menú, el borde, el círculo activo y las zonas seguras. La app quedó activa en Inicio; la revisión de logs de Flutter no mostró errores. Los enlaces locales y `git diff --check` pasaron. Las vistas siguen vacías y la verificación iOS continúa pendiente por falta de Xcode completo.
+
+Verificación de los títulos del 2 de octubre de 2026: formato y `flutter analyze` pasaron. `flutter run --debug --no-resident` compiló el APK, lo instaló y ejecutó en el Pixel 8a físico por Wi-Fi. Se comprobó que Inicio, Mesas, Marketplace, Mensajes y Mi Perfil muestran su título y que coincide con la selección del menú. La captura de Inicio permitió revisar su presentación centrada; la app quedó en esa sección. Los enlaces locales y `git diff --check` pasaron. iOS sigue sin verificar por falta de Xcode completo.
 
 ## Backend e integraciones pendientes
 

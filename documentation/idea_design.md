@@ -1,8 +1,8 @@
 # MeepleWorld: idea y diseño del producto
 
-Estado: definición de producto; backend inicial implementado y frontend Flutter con layout principal y enrutamiento inicial. Última actualización: 2 de octubre de 2026.
+Estado: definición de producto; backend inicial implementado y frontend Flutter con layout principal y navegación entre cinco vistas provisionales. Última actualización: 2 de octubre de 2026.
 
-Este documento es la referencia de producto para la primera versión. La arquitectura prevista y las instrucciones de desarrollo están en la [guía técnica](../.github/agent_instructions.md); la presentación general está en el [README](../README.md).
+Este documento es la referencia de producto para la primera versión. La arquitectura prevista y las instrucciones de desarrollo están en las [reglas del backend](../.github/backend/rules.md) y las [reglas del frontend](../.github/frontend/rules.md), reunidas en el [índice técnico](../.github/agent_instructions.md); la presentación general está en el [README](../README.md).
 
 ## 1. Visión y propósito
 
@@ -63,7 +63,7 @@ Para importar una colección, el usuario indicará un nombre de usuario de BGG y
 
 La importación reutilizará los juegos ya identificados por BGG, conservará los registros manuales y no eliminará juegos de la biblioteca por su ausencia en una importación posterior. Los registros manuales sin identificador BGG no se fusionarán automáticamente solo por tener el mismo nombre. Una importación fallida conservará la biblioteca anterior y permitirá reintentar. Indicar un usuario BGG no acredita que la persona sea titular de esa cuenta.
 
-El uso de BGG dependerá de la aprobación de la aplicación y sus credenciales. El registro manual seguirá disponible si la integración no está configurada o falla. Estos requisitos se detallan en la guía técnica.
+El uso de BGG dependerá de la aprobación de la aplicación y sus credenciales. El registro manual seguirá disponible si la integración no está configurada o falla. Estos requisitos se detallan en las [reglas del backend](../.github/backend/rules.md#boardgamegeek).
 
 ### 3.2. Publicación de mesas
 
@@ -229,12 +229,12 @@ Si antes de aceptar otra participación ocupa uno de los lugares, la aceptación
 
 ## 8. Evolución y pendientes
 
-La exigencia de sesión para toda la plataforma es una decisión de producto pendiente de aplicar por completo. El backend inicial todavía permite consultas anónimas de perfiles, catálogo, mesas y anuncios; deberán protegerse y actualizarse en el contrato OpenAPI al implementar el cambio. El frontend aún no implementa el flujo de acceso ni las vistas de producto. Por autorización del responsable, la ruta `/` abre provisionalmente el layout principal vacío con su fondo radial aprobado; no consume contenido de la API ni representa una sesión autenticada. El layout de autenticación y las redirecciones según sesión se implementarán después.
+La exigencia de sesión para toda la plataforma es una decisión de producto pendiente de aplicar por completo. El backend inicial todavía permite consultas anónimas de perfiles, catálogo, mesas y anuncios; deberán protegerse y actualizarse en el contrato OpenAPI al implementar el cambio. El frontend aún no implementa el flujo de acceso ni el contenido de producto. Por autorización del responsable, la ruta `/` abre provisionalmente Inicio en el layout principal, con el fondo radial aprobado y un menú inferior flotante para Inicio, Mesas, Marketplace, Mensajes y Mi Perfil. Cada sección tiene una ruta y una vista provisional con su título identificador; el menú resalta la sección activa con un círculo blanco. No consume contenido de la API ni representa una sesión autenticada. El layout de autenticación y las redirecciones según sesión se implementarán después.
 
 La verificación automática de cuentas nuevas fuera de producción también está pendiente de implementación y actualización del contrato de registro. El backend inicial aún crea cuentas con correo sin verificar y genera su mensaje de verificación en todos los entornos que admite.
 
 Las etapas siguientes podrán incorporar publicaciones sociales, amistades, comentarios públicos, lista de espera, sincronización automática con BGG, pagos integrados y expansión a otros países o idiomas. Estas funciones no forman parte de la primera versión y requerirán una definición propia antes de implementarse.
 
-Quedan pendientes los proveedores de hosting del backend, almacenamiento de imágenes, correo y push; las credenciales externas; la aprobación de BGG; el resto de la identidad visual y las fechas de lanzamiento. El responsable está preparando las pantallas; solo están autorizados el layout principal, su fondo radial y la estructura inicial de rutas. Las demás pantallas, componentes, estilos, temas y animaciones esperarán al diseño correspondiente. La primera versión documentada incluye esas integraciones donde corresponden, aunque aún no estén disponibles sus servicios.
+Quedan pendientes los proveedores de hosting del backend, almacenamiento de imágenes, correo y push; las credenciales externas; la aprobación de BGG; el resto de la identidad visual y las fechas de lanzamiento. El responsable está preparando las pantallas; están autorizados el layout principal, su fondo radial, las rutas de las cinco vistas provisionales y sus títulos identificadores, el menú flotante con HugeIcons y su contenedor de vidrio reutilizable (blanco al 30%, blur de 8 px y borde de 1 px con degradado `#F1E7FC` → `#DFC7FE`). El contenido de las pantallas y los demás componentes, estilos, temas y animaciones esperarán al diseño correspondiente. La primera versión documentada incluye esas integraciones donde corresponden, aunque aún no estén disponibles sus servicios.
 
 Como indicadores iniciales de utilidad se propone observar mesas publicadas, solicitudes que terminan confirmadas, mesas finalizadas, operaciones declaradas por ambas partes y recurrencia de usuarios. No se fijan metas numéricas hasta contar con datos de uso.

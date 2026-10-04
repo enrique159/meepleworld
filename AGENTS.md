@@ -1,46 +1,28 @@
 # Instrucciones para agentes de MeepleWorld
 
-Estas instrucciones se aplican a todo el repositorio. Este archivo es el punto de entrada; la guía técnica detallada se mantiene en `.github/agent_instructions.md` y las reglas de producto en `documentation/idea_design.md`.
+Estas instrucciones se aplican a todo el repositorio. Este archivo es el punto de entrada; las reglas detalladas se mantienen por proyecto.
 
 ## Lectura previa
 
-Antes de modificar el proyecto, leer:
+Antes de modificar el proyecto, inspeccionar el estado real del repositorio y leer:
 
 1. [Definición del producto](documentation/idea_design.md): alcance, recorridos, permisos y reglas de negocio.
-2. [Guía técnica](.github/agent_instructions.md): arquitectura, versiones, datos, integraciones y verificación.
-3. [README](README.md): presentación y estado general del proyecto.
+2. [README](README.md): presentación y estado general del proyecto.
+3. Las reglas del área afectada: [backend](.github/backend/rules.md) o [frontend](.github/frontend/rules.md). Leer ambas cuando el cambio afecte contratos, integración o decisiones compartidas.
 
-Inspeccionar el estado real del repositorio antes de ejecutar comandos. El frontend Flutter para Android e iOS tiene un layout principal con fondo radial y enrutamiento inicial; las pantallas, la autenticación móvil y la integración con la API están pendientes. El backend NestJS conserva sus entidades y endpoints iniciales para cuentas, perfiles, catálogo/biblioteca, mesas y anuncios; la guía técnica distingue lo implementado de lo previsto.
+El [índice técnico](.github/agent_instructions.md) orienta la consulta; las instrucciones específicas tienen su fuente en los dos archivos `rules.md`.
 
-## Decisiones del proyecto
+## Reglas comunes de trabajo
 
-- Mantener el nombre **MeepleWorld** y la documentación en español.
-- Mantener los proyectos `frontend` y `backend` independientes: Flutter con `pubspec.yaml` y `pubspec.lock`; NestJS con `package.json` y `package-lock.json`. No usar npm workspaces ni un `package.json` en la raíz.
-- Frontend: Flutter y Dart, canal estable, exclusivamente para Android e iOS. La web queda fuera del alcance.
-- Para depurar y verificar el frontend Android, buscar primero un dispositivo físico conectado por USB (Google Pixel u otro teléfono). Si no hay uno disponible por USB, usar el teléfono físico que ya está configurado para depuración por Wi-Fi. No usar emuladores Android.
-- Implementar únicamente el diseño autorizado por el responsable: ya están aprobados el layout principal, su fondo radial y el enrutamiento inicial. Por ahora `/` abre ese layout sin contenido ni sesión; el layout de autenticación queda pendiente. No adelantar otras pantallas, componentes, estilos, temas ni animaciones de producto.
-- Backend: NestJS 12 con ESM, TypeORM, `mysql2` y MySQL 8.4 LTS; API REST bajo `/api/v1`. Socket.IO para chat queda pendiente.
-- No fijar versiones de Node.js ni npm en la raíz del repositorio; cada proyecto se ejecuta desde su propio directorio. Usar MySQL local, sin Docker.
-- Lanzamiento inicial en México, en español y con importes en MXN. Los pagos y las entregas se acuerdan entre usuarios.
-- El acceso a toda la plataforma, incluidas las consultas de mesas, anuncios, catálogo y perfiles, requiere cuenta activa, correo verificado y sesión válida. Sin sesión solo se permiten los flujos de registro, acceso, verificación y recuperación; la renovación exige su credencial y el health check no expone contenido de la plataforma. El contenido denominado público solo es visible para usuarios autenticados.
-- Verificación de correo según el entorno del backend: con `NODE_ENV=production` se exige confirmación por correo; fuera de producción (`development` y `test`) el correo se marca como verificado al crear la cuenta, sin generar token ni enviar correo de verificación. Esta adaptación del registro inicial está pendiente.
-
-Las instrucciones explícitas del usuario tienen prioridad sobre estas decisiones. Cualquier cambio acordado de arquitectura o producto debe reflejarse en la documentación correspondiente.
-
-## Reglas de implementación
-
-- Implementar el alcance solicitado, conservando las reglas detalladas de la definición del producto y la guía técnica.
-- Mantener la autorización y las reglas de negocio en el backend, incluyendo HTTP, Socket.IO y tareas de fondo.
-- Proteger por defecto todos los endpoints de producto, también los de lectura, con excepciones explícitas para los flujos de acceso y el health check. La adaptación de las consultas anónimas del backend inicial a esta regla está pendiente; no presentarla como implementada.
-- Confirmar lugares con transacciones; las solicitudes y ofertas parciales pendientes no reservan cupo. Una aprobación parcial requiere aceptación del titular y nueva comprobación de disponibilidad.
-- Proteger direcciones y coordenadas privadas en respuestas, mapas, eventos, notificaciones y logs. Revocar permisos cuando cambia la participación.
-- Habilitar reputación solo para experiencias elegibles: mesas finalizadas y operaciones de marketplace confirmadas por ambas partes.
-- Usar migraciones versionadas y mantener `synchronize: false`. Separar las bases de desarrollo y pruebas.
-- Proteger credenciales y datos personales. Consumir BGG desde el backend y utilizar datos ficticios y adaptadores controlados en pruebas.
-- Mantener la guía técnica como referencia detallada. Al cambiar una decisión resumida aquí, actualizar también este archivo.
+- Mantener el nombre **MeepleWorld** y la documentación en español. Las instrucciones explícitas del usuario tienen prioridad sobre estas reglas.
+- Mantener `frontend` y `backend` independientes, con sus dependencias y lockfiles en su propio directorio. No usar npm workspaces ni un `package.json` en la raíz; no fijar allí versiones de Node.js ni npm.
+- Implementar el alcance solicitado y conservar las decisiones acordadas. Consultar al responsable si una necesidad exige cambiar stack, cupo, privacidad, pagos o alcance; resolver decisiones rutinarias sin pedir aprobación repetida.
+- Preferir cambios acotados, migraciones revisables y pruebas proporcionales que cubran comportamiento real. No exigir pruebas que solo reflejen el texto de la documentación. No modificar datos ajenos ni usar servicios reales para pruebas sin autorización aplicable.
+- Proteger credenciales y datos personales; no incluir secretos en código, documentación, pruebas, commits ni logs. Usar datos ficticios y configuración de ejemplo.
+- Actualizar la definición del producto, las reglas del proyecto afectado y los contratos OpenAPI cuando cambien comportamiento, arquitectura, configuración o pasos de desarrollo. Actualizar este archivo cuando cambie una regla común.
 
 ## Verificación y entrega
 
-Para cambios documentales, revisar coherencia, formato y enlaces. Cuando existan las aplicaciones, ejecutar las comprobaciones de tipos, lint, pruebas y compilación que correspondan al cambio; verificar funcionalidades móviles en sus plataformas.
+Para cambios documentales, revisar coherencia, formato y enlaces. Para código, ejecutar las comprobaciones de tipos, lint, pruebas y compilación que correspondan al cambio y estén configuradas; verificar funcionalidades móviles según las reglas del frontend.
 
-Actualizar documentación y contratos cuando cambien comportamiento, configuración o pasos de desarrollo. Al entregar, indicar qué cambió, cómo se verificó y qué queda pendiente. Distinguir siempre entre funcionalidades previstas, implementadas y simuladas.
+Al entregar, indicar qué cambió, cómo se verificó y qué queda pendiente. Distinguir siempre funcionalidades implementadas, previstas y simuladas; no declarar funcional una integración con credenciales ausentes o simuladas.

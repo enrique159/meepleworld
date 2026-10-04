@@ -23,15 +23,15 @@ El lanzamiento inicial está pensado para **México**, en **español**, con prec
 
 ## Estado del proyecto
 
-El repositorio contiene un frontend Flutter en `frontend/`, con plataformas Android e iOS, layout principal y enrutamiento inicial, y un backend NestJS con entidades y API REST inicial para cuentas, perfiles, catálogo/biblioteca, mesas y anuncios. La integración del cliente móvil con esa API está pendiente.
+El repositorio contiene un frontend Flutter en `frontend/`, con plataformas Android e iOS, layout principal y navegación entre cinco vistas provisionales, y un backend NestJS con entidades y API REST inicial para cuentas, perfiles, catálogo/biblioteca, mesas y anuncios. La integración del cliente móvil con esa API está pendiente.
 
 La obligación de iniciar sesión para todas las consultas ya está definida como regla de producto. El backend inicial aún permite consultas anónimas de perfiles, catálogo, mesas y anuncios; proteger esas rutas y actualizar su contrato OpenAPI sigue pendiente.
 
 La verificación automática al registrar cuentas fuera de producción también está acordada y pendiente de implementación. El registro actual todavía exige confirmar el correo en todos los entornos que admite el backend.
 
-La ruta `/` muestra provisionalmente el layout principal sin contenido, con el fondo radial aprobado (`#DFC6FE` → `#F3E6EF`). La navegación usa `go_router`; el layout de autenticación y la comprobación de sesión móvil están pendientes. La identidad visual y las demás pantallas siguen en preparación por el responsable del producto. El correo real, mapa, chat, Socket.IO, BGG, notificaciones, reputación y moderación siguen pendientes.
+La ruta `/` abre Inicio dentro del layout principal, con el fondo radial aprobado (`#DFC6FE` → `#F3E6EF`) y un menú inferior flotante para Inicio, Mesas, Marketplace, Mensajes y Mi Perfil. Las cinco vistas muestran únicamente un título para identificar la sección abierta. La navegación usa `go_router` e iconos de HugeIcons; el contenedor de vidrio del menú es reutilizable. El layout de autenticación, la comprobación de sesión móvil y el contenido de las pantallas están pendientes. El correo real, mapa, chat, Socket.IO, BGG, notificaciones, reputación y moderación siguen pendientes.
 
-Las fuentes Jeko entregadas para la identidad visual ya están registradas como recursos locales del frontend. Su uso está documentado en la [guía del frontend](frontend/README.md); la aplicación aún no las aplica a pantallas ni a un tema global.
+Las fuentes Jeko entregadas para la identidad visual ya están registradas como recursos locales del frontend. Su uso está documentado en la [guía del frontend](frontend/README.md); los títulos provisionales usan Jeko, sin un tema global.
 
 ### Arranque rápido del frontend
 
@@ -50,5 +50,7 @@ Los requisitos de Android/iOS y las comprobaciones disponibles están en la [gu�
 
 - [Idea, alcance y reglas del producto](documentation/idea_design.md).
 - [Punto de entrada para agentes](AGENTS.md).
-- [Guía técnica e instrucciones para agentes](.github/agent_instructions.md).
+- [Índice de instrucciones técnicas](.github/agent_instructions.md).
+- [Reglas e instrucciones del backend](.github/backend/rules.md).
+- [Reglas e instrucciones del frontend](.github/frontend/rules.md).
 - [Guía de instalación y arranque del frontend](frontend/README.md).
