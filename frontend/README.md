@@ -1,6 +1,6 @@
 # Frontend de MeepleWorld
 
-Proyecto Flutter exclusivamente para Android e iOS, con layout principal y navegación entre cinco vistas provisionales. La ruta `/` abre Inicio con el fondo radial, el menú inferior flotante y la cabecera aprobados. El contenido de las pantallas, las acciones de la cabecera, la autenticación y la integración con el backend están pendientes; los demás componentes, estilos, temas y animaciones se definirán cuando el responsable entregue su diseño.
+Proyecto Flutter exclusivamente para Android e iOS, con layout principal y navegación entre cinco vistas provisionales. La ruta `/` abre Inicio con el fondo radial, el menú inferior flotante, la cabecera, el saludo y los cinco accesos aprobados. El contenido de producto, las acciones de la cabecera y de las tarjetas, la autenticación y la integración con el backend están pendientes; los demás componentes, estilos, temas y animaciones se definirán cuando el responsable entregue su diseño.
 
 Las decisiones técnicas, el alcance autorizado y las instrucciones de implementación se mantienen en las [reglas del frontend](../.github/frontend/rules.md).
 
@@ -28,7 +28,7 @@ La organización implementada separa `lib/app/` (arranque, router y shell global
 
 Los nombres de pantallas usan el sufijo `Screen`, con archivos como `home_screen.dart`; `home_header.dart` está dentro de los widgets de Inicio. Los archivos y carpetas usan `snake_case` y los tipos `UpperCamelCase`. Las responsabilidades, límites de dependencia, convenciones están en [arquitectura del frontend](../.github/frontend/rules.md#arquitectura-organización-y-nombres).
 
-La refactorización de los 17 archivos Dart existentes está completada; las carpetas globales anteriores fueron retiradas. Las capas de estado, datos y dominio y las carpetas de pruebas se crearán cuando haya código que las necesite. Los apartados siguientes describen esta estructura y sus rutas actuales.
+La organización por funcionalidades contiene 20 archivos Dart; las carpetas globales anteriores fueron retiradas. Las capas de estado, datos y dominio y las carpetas de pruebas se crearán cuando haya código que las necesite. Los apartados siguientes describen esta estructura y sus rutas actuales.
 
 ## Layout principal y rutas
 
@@ -42,7 +42,7 @@ La refactorización de los 17 archivos Dart existentes está completada; las car
 | Mensajes | `/mensajes` | `messages` |
 | Mi Perfil | `/mi-perfil` | `profile` |
 
-Todas las vistas muestran su título y comparten fondo y menú; Inicio incorpora además su cabecera. `lib/core/ui/widgets/section_placeholder.dart` centraliza ese título provisional: centrado en el área de contenido restante, con Jeko de 24 píxeles lógicos, peso 600 y color `#1B1B1B`, marcado como encabezado para accesibilidad. El futuro layout de autenticación tendrá un grupo separado; no se han definido rutas ni pantallas de acceso todavía.
+Todas las vistas comparten fondo y menú; Inicio muestra la cabecera, el saludo y los accesos descritos abajo. `lib/core/ui/widgets/section_placeholder.dart` centraliza el título provisional de las otras cuatro vistas: centrado en el área de contenido restante, con Jeko de 24 píxeles lógicos, peso 600 y color predeterminado `#343136`, marcado como encabezado para accesibilidad. El futuro layout de autenticación tendrá un grupo separado; no se han definido rutas ni pantallas de acceso todavía.
 
 `lib/app/shell/main_shell.dart` reserva las zonas seguras y el espacio del menú para el contenido, y configura iconos oscuros en las barras del sistema. `lib/app/shell/widgets/main_background.dart` dibuja el fondo con un `RadialGradient` de Flutter, sin imágenes: `#DFC6FE` en 0% y `#F3E6EF` en 100%, ambos totalmente opacos. El centro está en la esquina superior derecha; el eje mayor llega a la inferior izquierda y el eje menor mide la mitad. Esa proporción aproxima la elipse de la referencia recibida y se adapta al tamaño y orientación de la pantalla. El fondo ocupa toda la superficie, incluidas las zonas detrás de las barras del sistema.
 
@@ -50,9 +50,11 @@ La apertura directa de estas rutas es una presentación provisional autorizada p
 
 ## Menú flotante y contenedor de vidrio
 
+El color predeterminado de textos e iconos en toda la app es `#343136`, centralizado en `lib/core/ui/styles/app_colors.dart` como `AppColors.foreground`. La raíz lo aplica a `WidgetsApp.router.textStyle` e `IconTheme`, incluyendo HugeIcons. Los componentes heredan el color y solo lo sobrescriben cuando el diseño especifica una excepción, como el texto y el icono blancos de Crear mesa o el degradado original del SVG de ubicación.
+
 `lib/app/shell/widgets/main_bottom_navigation_bar.dart` mantiene el menú fijo en la parte inferior, con 24 píxeles lógicos de margen lateral y 16 sobre el límite inferior de la zona segura. Su ancho máximo es de 400; el diámetro de los botones se adapta al ancho, entre 48 y 72. Los cinco iconos siempre están visibles; solo la sección activa tiene el círculo blanco. La selección se obtiene de la ruta actual mediante `MainSection`, y los toques usan `context.go` para cambiar de sección sin acumular pestañas en la pila de navegación. Cada botón expone su etiqueta y selección a accesibilidad, sin añadir texto visible al diseño.
 
-La dependencia [`hugeicons`](https://pub.dev/packages/hugeicons), resuelta a 1.2.0, aporta `strokeRoundedHome02`, `strokeRoundedTableRound`, `strokeRoundedStore01`, `strokeRoundedMessageSquare` y `strokeRoundedUser`. Se dibujan con `HugeIcon` a 28 píxeles lógicos, color `#1B1B1B` y trazo de 1.7.
+La dependencia [`hugeicons`](https://pub.dev/packages/hugeicons), resuelta a 1.2.0, aporta `strokeRoundedHome02`, `strokeRoundedTableRound`, `strokeRoundedStore01`, `strokeRoundedMessageSquare` y `strokeRoundedUser`. Se dibujan con `HugeIcon` a 28 píxeles lógicos, color predeterminado `#343136` y trazo de 1.7.
 
 `lib/core/ui/widgets/glass_container.dart` permite reutilizar la superficie aprobada en futuros componentes:
 
@@ -74,7 +76,29 @@ El SVG está registrado en `pubspec.yaml` y se carga con [`flutter_svg`](https:/
 
 El texto de ciudad usa el alias `JekoSemiBold`, registrado con el archivo `Jeko Semi Bold.ttf`. Los archivos Jeko inspeccionados declaran internamente peso 400, incluso Medium, Semi Bold y Bold; el alias con un único archivo evita que la cabecera resuelva una variante más fina al resolver la familia tipográfica. El registro de la familia general `Jeko` se conserva.
 
+## Saludo y accesos de Inicio
+
+`HomeScreen` recibe `userName`, con el valor provisional «Enrique», y muestra «Hola, Enrique» como encabezado con Jeko Semi Bold a 28. El nombre visible de la cuenta se conectará cuando exista sesión. El saludo reemplaza el título centrado de Inicio y la pantalla permite desplazarse sin mover el menú inferior.
+
+`HomeQuickActions` compone un grid de dos columnas con márgenes laterales de 32 y separación de 12. Crear mesa ocupa las dos primeras filas de la izquierda; Ver mapa y Mi ludoteca están a su derecha; Mis amigos y Marketplace quedan en la última fila. La altura se calcula según el ancho y el tamaño de texto del sistema, permitiendo que las etiquetas se ajusten sin recortarse.
+
+`HomeQuickActionCard` mantiene radio de 28 y usa padding de 9 (antes 16). Todas las etiquetas usan el archivo Jeko Regular con peso explícito `FontWeight.w400`: los accesos de color a 18 y Crear mesa a 22. La altura mínima de las tarjetas se redujo y sigue creciendo cuando el tamaño de texto del sistema lo requiere. Los cuatro accesos de color tienen un círculo de 48 con blanco al 20% y un HugeIcon a 24, trazo 1.7:
+
+| Acceso | HugeIcons | Fondo |
+| --- | --- | --- |
+| Ver mapa | `strokeRoundedMapsLocation02` | `#EEB85F` |
+| Mi ludoteca | `strokeRoundedDice` | `#8FB2EC` |
+| Mis amigos | `strokeRoundedAiCoEditing` | `#EC8DBD` |
+| Marketplace | `strokeRoundedStore01` | `#9590ED` |
+| Crear mesa | `strokeRoundedPlus` | Fotografía y degradado morado |
+
+Crear mesa utiliza [la fotografía vertical local](assets/images/create_table_background.jpg), recreada con ImageGen a partir de la referencia entregada en 1024 × 1536 (2:3), con `BoxFit.cover`. Flutter añade el degradado morado, el texto blanco Jeko Regular a 22, peso 400 y el icono de suma; el archivo no contiene esos elementos. Su [procedencia y prompt](assets/images/README.md) están documentados junto al recurso. El JPEG está registrado explícitamente en `pubspec.yaml`.
+
+Las cinco tarjetas reciben callbacks opcionales y todavía no tienen acciones conectadas. Accesibilidad las identifica con su nombre como botones deshabilitados, conservando el diseño visible. Mis amigos es únicamente un acceso visual; las relaciones de amistad continúan fuera del alcance de la primera versión. No hay nuevas rutas ni consumo de la API.
+
 ## Fuentes tipográficas
+
+Las tarjetas utilizan el alias `JekoRegular`, registrado con un único archivo `Jeko Regular.ttf`, y peso explícito 400. Esto garantiza la variante Regular aunque los archivos entregados compartan metadatos internos de peso. La cabecera y el saludo conservan `JekoSemiBold`.
 
 Los 19 archivos de Jeko están en `assets/fonts/`, junto a `lib/`, y se registran en la sección `flutter.fonts` de `pubspec.yaml`. Las rutas parten de ese archivo, según la [guía oficial de fuentes de Flutter](https://docs.flutter.dev/cookbook/design/fonts). Esta declaración incluye las fuentes en la aplicación; no es necesario repetirlas en `flutter.assets` ni configurarlas por separado en Android e iOS.
 
@@ -172,6 +196,8 @@ Verificación de los títulos del 2 de octubre de 2026: formato y `flutter analy
 Verificación del icono Android del 4 de octubre de 2026: formato, `flutter analyze`, `flutter build apk --debug`, XML y enlaces locales pasaron. El APK se instaló y ejecutó en el Pixel 8a físico por Wi-Fi con Android 17 (API 37), al no haber un teléfono por USB. La ficha de información de MeepleWorld mostró el icono adaptativo con la ilustración, el degradado, los ojos y el fondo blanco correctos. El XML compilado de API 33 incluye fondo, primer plano y monocromo. La comparación de una renderización vectorial con la referencia confirmó la composición; el contorno queda a un máximo de 30.22 dp del centro, dentro de la zona segura de radio 33 dp. Se verificaron los cinco tamaños PNG y la exportación Google Play de 44 161 bytes, RGBA de 8 bits, alfa opaco y perfil sRGB. Las vistas de colores personalizados son simulaciones; no se modificaron las preferencias del launcher ni se verificó en el teléfono un cambio de color. Android 7 e iOS no se verificaron en dispositivos.
 
 ## Backend e integraciones pendientes
+
+Verificación del saludo y accesos del 4 de octubre de 2026: formato, `flutter analyze` y `flutter build apk --debug` pasaron. La versión final se instaló y ejecutó con `flutter run --debug --no-resident` en el Pixel 8a físico por Wi-Fi; el arranque con ancho inicial de cero no produjo excepciones. La captura de Inicio confirmó las cinco tarjetas, las etiquetas sin cortes, la tipografía Regular, el padding reducido, la imagen vertical con overlay y el color común en textos e iconos, conservando el blanco de Crear mesa. La jerarquía de accesibilidad confirmó las cinco etiquetas y su estado deshabilitado. Se revisaron enlaces locales y `git diff --check`. La app quedó en Inicio; iOS continúa sin verificar porque no hay Xcode completo.
 
 La API existente conserva sus endpoints y contrato en [backend/openapi.yaml](../backend/openapi.yaml); el frontend todavía no los consume. No es necesario iniciar el backend para ejecutar el layout principal.
 

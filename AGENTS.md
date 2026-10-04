@@ -15,6 +15,7 @@ El [índice técnico](.github/agent_instructions.md) orienta la consulta; las in
 ## Reglas comunes de trabajo
 
 - Mantener el nombre **MeepleWorld** y la documentación en español. Las instrucciones explícitas del usuario tienen prioridad sobre estas reglas.
+- En la interfaz, usar `#343136` como color predeterminado de textos e iconos en toda la app, salvo una excepción especificada por el diseño, como el blanco de Crear mesa. Centralizar el valor y heredar el estilo global según las reglas del frontend.
 - Mantener `frontend` y `backend` independientes, con sus dependencias y lockfiles en su propio directorio. No usar npm workspaces ni un `package.json` en la raíz; no fijar allí versiones de Node.js ni npm.
 - Implementar el alcance solicitado y conservar las decisiones acordadas. Consultar al responsable si una necesidad exige cambiar stack, cupo, privacidad, pagos o alcance; resolver decisiones rutinarias sin pedir aprobación repetida.
 - Preferir cambios acotados, migraciones revisables y pruebas proporcionales que cubran comportamiento real. No exigir pruebas que solo reflejen el texto de la documentación. No modificar datos ajenos ni usar servicios reales para pruebas sin autorización aplicable.

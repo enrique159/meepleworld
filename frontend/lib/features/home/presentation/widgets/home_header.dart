@@ -18,8 +18,6 @@ class HomeHeader extends StatelessWidget {
   final VoidCallback? onSearchPressed;
   final VoidCallback? onNotificationsPressed;
 
-  static const _foregroundColor = Color(0xFF343136);
-
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -49,7 +47,6 @@ class HomeHeader extends StatelessWidget {
                         fontFamily: 'JekoSemiBold',
                         fontSize: 18,
                         fontWeight: FontWeight.w400,
-                        color: _foregroundColor,
                       ),
                     ),
                   ),
@@ -85,12 +82,7 @@ class HomeHeader extends StatelessWidget {
         semanticLabel: label,
         onPressed: onPressed,
         padding: EdgeInsets.zero,
-        child: HugeIcon(
-          icon: icon,
-          size: 24,
-          strokeWidth: 1.7,
-          color: _foregroundColor,
-        ),
+        child: HugeIcon(icon: icon, size: 24, strokeWidth: 1.7),
       ),
     );
   }

@@ -1,6 +1,6 @@
 # MeepleWorld: reglas del frontend
 
-Estado: Flutter con layout principal y navegación entre cinco vistas provisionales para Android e iOS; contenido de producto, autenticación e integración con la API pendientes. Última actualización documental: 4 de octubre de 2026.
+Estado: Flutter con layout principal, cabecera, saludo y accesos visuales de Inicio y navegación entre cinco vistas provisionales para Android e iOS; contenido de producto, autenticación e integración con la API pendientes. Última actualización documental: 4 de octubre de 2026.
 
 Estas reglas se aplican a `frontend/`, incluidos sus proyectos nativos Android e iOS. Leer también [AGENTS.md](../../AGENTS.md), la [definición del producto](../../documentation/idea_design.md) y el [README del frontend](../../frontend/README.md). Para cambios de contratos o integración, consultar las [reglas del backend](../backend/rules.md). Inspeccionar el estado real antes de implementar: las capacidades previstas no implican que ya existan.
 
@@ -18,7 +18,7 @@ Estas reglas se aplican a `frontend/`, incluidos sus proyectos nativos Android e
 | Pruebas previstas | `flutter_test` e `integration_test` cuando se implementen funcionalidades; no hay suite Dart. |
 | Depuración Android | Teléfono físico: primero USB; si no hay uno, el ya configurado por Wi-Fi. No usar emuladores Android. |
 
-Implementar únicamente el diseño autorizado por el responsable: layout principal, fondo radial, menú inferior flotante con HugeIcons, contenedor y botones de vidrio reutilizables, cabecera de Inicio, icono oficial de Android y cinco vistas provisionales con un título identificador (Inicio, Mesas, Marketplace, Mensajes y Mi Perfil). Por ahora `/` abre Inicio con su título y una cabecera con la ciudad provisional «La Paz», búsqueda y notificaciones; sus acciones, el contenido de producto y la sesión siguen pendientes. Las demás rutas muestran únicamente su título y el layout de autenticación queda pendiente. No adelantar contenido de pantallas, otros componentes, estilos, temas ni animaciones de producto.
+Implementar únicamente el diseño autorizado por el responsable: layout principal, fondo radial, menú inferior flotante con HugeIcons, contenedor y botones de vidrio reutilizables, cabecera, saludo y cinco accesos visuales de Inicio, icono oficial de Android y vistas provisionales para Inicio, Mesas, Marketplace, Mensajes y Mi Perfil. `/` abre Inicio con la ciudad provisional «La Paz», búsqueda y notificaciones, «Hola, Enrique» y las tarjetas Crear mesa, Ver mapa, Mi ludoteca, Mis amigos y Marketplace. El nombre se recibe mediante un parámetro para mostrar el nombre visible de la cuenta cuando exista sesión. Las acciones de cabecera y tarjetas, el contenido de producto y la sesión siguen pendientes. Mis amigos no autoriza implementar relaciones de amistad. Las otras cuatro rutas muestran únicamente su título y el layout de autenticación queda pendiente. No adelantar contenido de pantallas, otros componentes, estilos, temas ni animaciones de producto.
 
 Todavía no se han elegido paquetes de estado ni integraciones. No introducir otro gestor de paquetes o framework sin actualizar la decisión y la documentación. Mantener el nombre MeepleWorld y la interfaz en español, con lanzamiento inicial en México e importes en MXN. Los pagos y las entregas se acuerdan entre usuarios.
 
@@ -37,7 +37,8 @@ frontend/
 ├── analysis_options.yaml
 ├── assets/
 │   ├── custom/
-│   └── fonts/
+│   ├── fonts/
+│   └── images/
 ├── lib/
 │   ├── main.dart
 │   ├── app/
@@ -54,6 +55,8 @@ frontend/
 │   │           └── main_bottom_navigation_bar.dart
 │   ├── core/
 │   │   └── ui/
+│   │       ├── styles/
+│   │       │   └── app_colors.dart
 │   │       └── widgets/
 │   │           ├── glass_button.dart
 │   │           ├── glass_container.dart
@@ -64,7 +67,9 @@ frontend/
 │       │       ├── screens/
 │       │       │   └── home_screen.dart
 │       │       └── widgets/
-│       │           └── home_header.dart
+│       │           ├── home_header.dart
+│       │           ├── home_quick_actions.dart
+│       │           └── home_quick_action_card.dart
 │       ├── tables/
 │       │   └── presentation/screens/tables_screen.dart
 │       ├── marketplace/
@@ -141,7 +146,7 @@ Usar inglés para nombres de código y carpetas, conservando español en la inte
 
 ### Estado actual y mantenimiento
 
-La organización por funcionalidades está implementada para los 17 archivos Dart actuales. `app` compone el router y `MainShell`; `core/ui/widgets/` contiene las piezas compartidas; las cinco funcionalidades tienen sus pantallas y la cabecera de Inicio pertenece a los widgets de `home`. Las anteriores carpetas globales fueron retiradas.
+La organización por funcionalidades está implementada para los 20 archivos Dart actuales. `app` compone el router y `MainShell`; `core/ui/widgets/` contiene las piezas compartidas; las cinco funcionalidades tienen sus pantallas y la cabecera y tarjetas de Inicio pertenecen a los widgets de `home`. Las anteriores carpetas globales fueron retiradas.
 
 La presentación actual sigue siendo visual y provisional. Los modelos de vista, estados, repositorios, servicios, casos de uso y suite de pruebas se incorporarán cuando exista comportamiento que los necesite; todavía no hay integración con la API ni gestor de estado elegido.
 
@@ -149,7 +154,9 @@ Todo cambio de organización deberá actualizar archivos, clases, imports, route
 
 ## Layout, navegación y reglas de implementación
 
-El frontend `frontend/` arranca con el nombre MeepleWorld y `WidgetsApp.router`. `lib/app/router/app_router.dart` configura `go_router`: `/` (Inicio), `/mesas`, `/marketplace`, `/mensajes` y `/mi-perfil` pertenecen a una `ShellRoute` cuyo layout es `MainShell`. Las rutas y sus nombres se definen en `lib/app/router/app_routes.dart`; cada una abre su pantalla de `lib/features/<feature>/presentation/screens/` con un título identificador mediante `NoTransitionPage`. El router se conserva durante la vida de la app y se libera al desmontarla. El layout de autenticación se añadirá en otro grupo de rutas. No contiene contenido de producto, estado de negocio, servicios HTTP, temas personalizados ni integraciones.
+El color predeterminado de todos los textos e iconos de MeepleWorld es `#343136`. `AppColors.foreground`, en `lib/core/ui/styles/app_colors.dart`, centraliza el valor; `MeepleWorldApp` lo aplica mediante `WidgetsApp.router.textStyle` e `IconTheme`. Los textos, los iconos estándar de Flutter y HugeIcons heredan este color. No introducir colores particulares sin una excepción del diseño; Crear mesa conserva su texto e icono blancos, y el SVG original de ubicación conserva su degradado especificado. El saludo, los títulos provisionales y el menú inferior utilizan ahora el color común.
+
+El frontend `frontend/` arranca con el nombre MeepleWorld y `WidgetsApp.router`. `lib/app/router/app_router.dart` configura `go_router`: `/` (Inicio), `/mesas`, `/marketplace`, `/mensajes` y `/mi-perfil` pertenecen a una `ShellRoute` cuyo layout es `MainShell`. Las rutas y sus nombres se definen en `lib/app/router/app_routes.dart`; cada una abre su pantalla de `lib/features/<feature>/presentation/screens/` mediante `NoTransitionPage`. Inicio muestra su cabecera, saludo y accesos visuales; las demás pantallas mantienen su título identificador. El router se conserva durante la vida de la app y se libera al desmontarla. El layout de autenticación se añadirá en otro grupo de rutas. No contiene contenido de producto, estado de negocio, servicios HTTP, temas personalizados ni integraciones.
 
 `MainShell`, en `lib/app/shell/main_shell.dart`, configura las barras del sistema con iconos oscuros, reserva las zonas seguras y deja espacio para el menú inferior fijo. `MainBackground` ocupa toda la superficie con un `RadialGradient`: `#DFC6FE` en 0% y `#F3E6EF` en 100%, opacos. Su centro está en la esquina superior derecha; una transformación orienta el eje mayor hacia la inferior izquierda y deja el menor a la mitad del mayor, aproximando la referencia recibida. La geometría se recalcula con los límites de la superficie.
 
@@ -157,15 +164,21 @@ El frontend `frontend/` arranca con el nombre MeepleWorld y `WidgetsApp.router`.
 
 `GlassContainer`, en `lib/core/ui/widgets/glass_container.dart`, encapsula blanco al 30%, `BackdropFilter` con `ImageFilter.blur(sigmaX: 8, sigmaY: 8)` y borde interior de 1 píxel lógico. Un `CustomPainter` dibuja el degradado de `#F1E7FC` (superior izquierda) a `#DFC7FE` (inferior derecha) solo en el borde. Acepta contenido, radio y padding para reutilizar el estilo; el menú lo usa con forma de cápsula. `GlassButton`, en `lib/core/ui/widgets/glass_button.dart`, reutiliza esa superficie con altura de 56 y etiquetas semánticas; sus acciones son opcionales y accesibilidad lo identifica como deshabilitado cuando no tiene una acción conectada.
 
-`HomeHeader`, en `lib/features/home/presentation/widgets/home_header.dart`, aparece únicamente en Inicio, con márgenes laterales de 24 y superior de 16 dentro de la zona segura. Muestra una cápsula con «La Paz» con el archivo Jeko Semi Bold a 18, y el SVG original `assets/custom/location_filled.svg` a 18, conservando su degradado. A la derecha hay dos botones circulares de 56 con `strokeRoundedSearch01` y `strokeRoundedNotification01`, a 24 y trazo 1.7. El texto y los HugeIcons usan `#343136`; el texto de ciudad se adapta al ancho con elipsis. El SVG se registra en `pubspec.yaml` y se carga con `flutter_svg` 2.3.0, ahora dependencia directa (ya era transitiva de HugeIcons). «La Paz» es un dato visual provisional: no se obtiene del dispositivo ni de la API. Los tres botones aún no tienen acciones; no añadir búsquedas, selección de ciudad, permisos ni notificaciones sin su correspondiente diseño. Estos componentes y las cinco vistas provisionales con sus títulos están autorizados; el contenido y los demás diseños siguen pendientes.
+`HomeHeader`, en `lib/features/home/presentation/widgets/home_header.dart`, aparece únicamente en Inicio, con márgenes laterales de 24 y superior de 16 dentro de la zona segura. Muestra una cápsula con «La Paz» con el archivo Jeko Semi Bold a 18, y el SVG original `assets/custom/location_filled.svg` a 18, conservando su degradado. A la derecha hay dos botones circulares de 56 con `strokeRoundedSearch01` y `strokeRoundedNotification01`, a 24 y trazo 1.7. El texto y los HugeIcons usan `#343136`; el texto de ciudad se adapta al ancho con elipsis. El SVG se registra en `pubspec.yaml` y se carga con `flutter_svg` 2.3.0, ahora dependencia directa (ya era transitiva de HugeIcons). «La Paz» es un dato visual provisional: no se obtiene del dispositivo ni de la API. Los tres botones aún no tienen acciones; no añadir búsquedas, selección de ciudad, permisos ni notificaciones sin su correspondiente diseño. La cabecera, el saludo, los accesos visuales y las cinco vistas provisionales están autorizados; el contenido de producto y los demás diseños siguen pendientes.
 
-Las fuentes entregadas por el responsable están en `frontend/assets/fonts/` y registradas en `frontend/pubspec.yaml`: `Jeko` con pesos 100–900 normales y cursivos, y `JekoItalicVariable` como fuente fija cursiva independiente, porque el archivo no contiene ejes variables. Los títulos provisionales usan Jeko con peso 600 y tamaño de 24 píxeles lógicos, centrados en el área de contenido mediante `SectionPlaceholder`; no existe un tema global. Los ejemplos de uso y el registro están documentados en [frontend/README.md](../../frontend/README.md).
+`HomeScreen` reemplaza el título provisional de Inicio por «Hola, Enrique», con `userName` como parámetro provisional, Jeko Semi Bold a 28 y semántica de encabezado. La pantalla usa `SingleChildScrollView`, conserva la cabecera y deja el menú fijo en el shell. `HomeQuickActions`, en `lib/features/home/presentation/widgets/home_quick_actions.dart`, dispone dos columnas con separación de 12 y márgenes laterales de 32: Crear mesa ocupa las dos primeras filas a la izquierda, Ver mapa y Mi ludoteca quedan a la derecha, y Mis amigos y Marketplace comparten la última fila. Las alturas crecen con el ancho y con la medición de las etiquetas para respetar el tamaño de texto del sistema.
 
-La cabecera usa el alias `JekoSemiBold`, registrado únicamente con `Jeko Semi Bold.ttf` y peso 600. Los archivos Regular, Medium, Semi Bold y Bold inspeccionados tienen peso interno 400; el alias garantiza el archivo Semi Bold en la ciudad sin cambiar el registro general ni los títulos de las otras vistas.
+`HomeQuickActionCard`, junto al grid, reutiliza radio de 28, padding de 9 (antes 16), etiquetas Jeko Regular a 18 con peso explícito `FontWeight.w400` e iconos a 24 con trazo 1.7, dentro de círculos de 48 con blanco al 20%. Usa `strokeRoundedMapsLocation02`, `strokeRoundedDice`, `strokeRoundedAiCoEditing` y `strokeRoundedStore01`, con fondos `#EEB85F`, `#8FB2EC`, `#EC8DBD` y `#9590ED`. Crear mesa usa `strokeRoundedPlus`, texto Jeko Regular blanco a 22 con peso 400 y `assets/images/create_table_background.jpg` con `BoxFit.cover` y degradado morado transparente arriba y opaco abajo. La fotografía fue recreada con ImageGen desde la referencia entregada en 1024 × 1536 (2:3); su [procedencia y prompt](../../frontend/assets/images/README.md) se conservan junto al recurso registrado en `pubspec.yaml`. Las cinco tarjetas reciben callbacks opcionales, no tienen acciones conectadas y se anuncian como botones deshabilitados sin atenuar el diseño. No añadir rutas, mapa, biblioteca, publicación ni amistades a partir de estos accesos visuales.
+
+Las fuentes entregadas por el responsable están en `frontend/assets/fonts/` y registradas en `frontend/pubspec.yaml`: `Jeko` con pesos 100–900 normales y cursivos, y `JekoItalicVariable` como fuente fija cursiva independiente, porque el archivo no contiene ejes variables. Los títulos provisionales de las otras cuatro pantallas usan Jeko con peso 600 y tamaño de 24 píxeles lógicos, centrados en el área de contenido mediante `SectionPlaceholder`; el estilo global de primer plano se define en `AppColors` y en la raíz de la aplicación. Los ejemplos de uso y el registro están documentados en [frontend/README.md](../../frontend/README.md).
+
+La cabecera y el saludo usan el alias `JekoSemiBold`, registrado únicamente con `Jeko Semi Bold.ttf` y peso 600. Los archivos Regular, Medium, Semi Bold y Bold inspeccionados tienen peso interno 400; el alias garantiza el archivo Semi Bold sin cambiar el registro general ni los títulos de las otras vistas.
+
+Las cinco tarjetas usan el alias `JekoRegular`, registrado únicamente con `Jeko Regular.ttf` y peso 400, para asegurar el archivo solicitado. La altura corta toma el máximo entre el 60% del ancho y el contenido medido (padding de 9 por lado, círculo de 48, separación de 6 y etiqueta); Crear mesa conserva la altura de dos filas más su separación. La medición admite un ancho inicial de cero durante el arranque móvil.
 
 El backend inicial está implementado en `backend/` con autenticación y recuperación de acceso, perfiles, catálogo/biblioteca, descubrimiento y publicación de mesas, participaciones, ubicación privada y anuncios. El contrato REST se mantiene en [openapi.yaml](../../backend/openapi.yaml). El chat, Socket.IO, BGG, notificaciones, reputación, moderación y mapa siguen pendientes porque no hay contratos implementados para esas funciones.
 
-La regla de producto exige cuenta activa, correo verificado y sesión válida para entrar a cualquier vista de contenido, incluidas las consultas de mesas, anuncios, catálogo y perfiles. El contenido denominado público solo es visible para usuarios autenticados. La apertura actual de las cinco rutas sin sesión es una presentación provisional autorizada del layout y sus vistas con título; no representa autenticación ni consume contenido de la API. El layout de acceso y los controles de sesión siguen pendientes. Antes de incorporar mesas, anuncios, catálogo, biblioteca, mapa o perfiles, comprobar o restaurar la sesión, también desde enlaces. Sin sesión mostrar únicamente los flujos de registro, acceso, verificación y recuperación. Si la renovación falla por expiración o revocación, volver al flujo de acceso y retirar el estado local de la cuenta y el contenido protegido.
+La regla de producto exige cuenta activa, correo verificado y sesión válida para entrar a cualquier vista de contenido, incluidas las consultas de mesas, anuncios, catálogo y perfiles. El contenido denominado público solo es visible para usuarios autenticados. La apertura actual de las cinco rutas sin sesión es una presentación provisional autorizada del layout, Inicio con cabecera, saludo y accesos, y las otras cuatro vistas con título; no representa autenticación ni consume contenido de la API. El layout de acceso y los controles de sesión siguen pendientes. Antes de incorporar mesas, anuncios, catálogo, biblioteca, mapa o perfiles, comprobar o restaurar la sesión, también desde enlaces. Sin sesión mostrar únicamente los flujos de registro, acceso, verificación y recuperación. Si la renovación falla por expiración o revocación, volver al flujo de acceso y retirar el estado local de la cuenta y el contenido protegido.
 
 Al comenzar la implementación móvil, separar presentación, estado y acceso a servicios; elegir entonces las dependencias necesarias. Consumir los contratos de la API mediante modelos Dart independientes del ORM. La autenticación móvil y el almacenamiento seguro de credenciales siguen pendientes.
 

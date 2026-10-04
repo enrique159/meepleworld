@@ -90,12 +90,7 @@ class _NavigationButton extends StatelessWidget {
                     : const Color(0x00000000),
               ),
               child: Center(
-                child: HugeIcon(
-                  icon: section.icon,
-                  size: 28,
-                  strokeWidth: 1.7,
-                  color: const Color(0xFF1B1B1B),
-                ),
+                child: HugeIcon(icon: section.icon, size: 28, strokeWidth: 1.7),
               ),
             ),
           ),

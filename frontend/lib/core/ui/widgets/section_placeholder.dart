@@ -17,7 +17,6 @@ class SectionPlaceholder extends StatelessWidget {
             fontFamily: 'Jeko',
             fontSize: 24,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF1B1B1B),
           ),
         ),
       ),

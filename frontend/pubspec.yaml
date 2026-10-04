@@ -19,7 +19,12 @@ dev_dependencies:
 flutter:
   assets:
     - assets/custom/location_filled.svg
+    - assets/images/create_table_background.jpg
   fonts:
+    - family: JekoRegular
+      fonts:
+        - asset: assets/fonts/Jeko Regular.ttf
+          weight: 400
     - family: JekoSemiBold
       fonts:
         - asset: assets/fonts/Jeko Semi Bold.ttf
