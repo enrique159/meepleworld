@@ -1,6 +1,6 @@
 # Frontend de MeepleWorld
 
-Proyecto Flutter exclusivamente para Android e iOS, con layout principal y navegación entre cinco vistas provisionales. La ruta `/` abre Inicio con el fondo radial y el menú inferior flotante aprobados. El contenido de las pantallas, la autenticación y la integración con el backend están pendientes; los demás componentes, estilos, temas y animaciones se definirán cuando el responsable entregue su diseño.
+Proyecto Flutter exclusivamente para Android e iOS, con layout principal y navegación entre cinco vistas provisionales. La ruta `/` abre Inicio con el fondo radial, el menú inferior flotante y la cabecera aprobados. El contenido de las pantallas, las acciones de la cabecera, la autenticación y la integración con el backend están pendientes; los demás componentes, estilos, temas y animaciones se definirán cuando el responsable entregue su diseño.
 
 Las decisiones técnicas, el alcance autorizado y las instrucciones de implementación se mantienen en las [reglas del frontend](../.github/frontend/rules.md).
 
@@ -18,7 +18,7 @@ La base se creó con Flutter 3.47.5 del canal estable y Dart 3.13.4. Las depende
 | Mensajes | `/mensajes` | `messages` |
 | Mi Perfil | `/mi-perfil` | `profile` |
 
-Todas las vistas muestran únicamente su título y comparten fondo y menú. `lib/views/section_placeholder.dart` centraliza ese título provisional: centrado en el área de contenido, con Jeko de 24 píxeles lógicos, peso 600 y color `#1B1B1B`, marcado como encabezado para accesibilidad. El futuro layout de autenticación tendrá un grupo separado; no se han definido rutas ni pantallas de acceso todavía.
+Todas las vistas muestran su título y comparten fondo y menú; Inicio incorpora además su cabecera. `lib/views/section_placeholder.dart` centraliza ese título provisional: centrado en el área de contenido restante, con Jeko de 24 píxeles lógicos, peso 600 y color `#1B1B1B`, marcado como encabezado para accesibilidad. El futuro layout de autenticación tendrá un grupo separado; no se han definido rutas ni pantallas de acceso todavía.
 
 `lib/layouts/main_layout.dart` reserva las zonas seguras y el espacio del menú para el contenido, y configura iconos oscuros en las barras del sistema. `lib/layouts/main_background.dart` dibuja el fondo con un `RadialGradient` de Flutter, sin imágenes: `#DFC6FE` en 0% y `#F3E6EF` en 100%, ambos totalmente opacos. El centro está en la esquina superior derecha; el eje mayor llega a la inferior izquierda y el eje menor mide la mitad. Esa proporción aproxima la elipse de la referencia recibida y se adapta al tamaño y orientación de la pantalla. El fondo ocupa toda la superficie, incluidas las zonas detrás de las barras del sistema.
 
@@ -37,7 +37,18 @@ La dependencia [`hugeicons`](https://pub.dev/packages/hugeicons), resuelta a 1.2
 - Borde de 1 píxel lógico con degradado lineal `#F1E7FC` en la esquina superior izquierda y `#DFC7FE` en la inferior derecha.
 - Parámetros `child`, `borderRadius` y `padding`; el menú usa radio de cápsula y padding de 6.
 
-El borde se pinta únicamente sobre el contorno, sin aplicar su degradado al interior. No se han incorporado otros botones de producto ni animaciones.
+El borde se pinta únicamente sobre el contorno, sin aplicar su degradado al interior. `lib/components/glass_button.dart` reutiliza esta superficie para los botones de la cabecera, con forma de cápsula, altura de 56 y una etiqueta semántica. No se han incorporado animaciones.
+
+## Cabecera de Inicio
+
+`lib/views/home_header.dart` muestra tres botones sobre el mismo fondo, con 24 píxeles lógicos de margen lateral y 16 de margen superior dentro de la zona segura:
+
+- Una cápsula a la izquierda con el icono personalizado `assets/custom/location_filled.svg` y «La Paz» en Jeko de 18, peso 600. El SVG mantiene su degradado original y el texto usa elipsis si el ancho disponible es pequeño.
+- Dos botones circulares a la derecha, de 56 de diámetro, con `HugeIcons.strokeRoundedSearch01` y `HugeIcons.strokeRoundedNotification01`, tamaño 24, trazo 1.7 y etiquetas accesibles «Buscar» y «Notificaciones».
+
+El SVG está registrado en `pubspec.yaml` y se carga con [`flutter_svg`](https://pub.dev/packages/flutter_svg), resuelto a 2.3.0 y declarado como dependencia directa; HugeIcons ya lo utilizaba de forma transitiva. La ciudad es un dato visual provisional, sin geolocalización ni consulta a la API. Los tres botones carecen de acciones conectadas y se anuncian como deshabilitados a accesibilidad; los flujos de selección de ciudad, búsqueda y notificaciones siguen pendientes.
+
+El texto de ciudad usa el alias `JekoSemiBold`, registrado con el archivo `Jeko Semi Bold.ttf`. Los archivos Jeko inspeccionados declaran internamente peso 400, incluso Medium, Semi Bold y Bold; el alias con un único archivo evita que la cabecera resuelva una variante más fina al seleccionar peso 600. El registro de la familia general `Jeko` se conserva.
 
 ## Fuentes tipográficas
 

@@ -11,12 +11,19 @@ dependencies:
     sdk: flutter
   go_router: ^18.0.2
   hugeicons: ^1.2.0
+  flutter_svg: ^2.3.0
 
 dev_dependencies:
   flutter_lints: ^6.0.0
 
 flutter:
+  assets:
+    - assets/custom/location_filled.svg
   fonts:
+    - family: JekoSemiBold
+      fonts:
+        - asset: assets/fonts/Jeko Semi Bold.ttf
+          weight: 600
     - family: Jeko
       fonts:
         - asset: assets/fonts/Jeko Thin.ttf

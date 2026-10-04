@@ -17,7 +17,7 @@ Estas reglas se aplican a `frontend/`, incluidos sus proyectos nativos Android e
 | Pruebas previstas | `flutter_test` e `integration_test` cuando se implementen funcionalidades; no hay suite Dart. |
 | Depuración Android | Teléfono físico: primero USB; si no hay uno, el ya configurado por Wi-Fi. No usar emuladores Android. |
 
-Implementar únicamente el diseño autorizado por el responsable: layout principal, fondo radial, menú inferior flotante con HugeIcons, contenedor de vidrio reutilizable y cinco vistas provisionales con un título identificador (Inicio, Mesas, Marketplace, Mensajes y Mi Perfil). Por ahora `/` abre Inicio solo con su título, sin contenido de producto ni sesión; las demás rutas también muestran únicamente su título y el layout de autenticación queda pendiente. No adelantar contenido de pantallas, otros componentes, estilos, temas ni animaciones de producto.
+Implementar únicamente el diseño autorizado por el responsable: layout principal, fondo radial, menú inferior flotante con HugeIcons, contenedor y botones de vidrio reutilizables, cabecera de Inicio y cinco vistas provisionales con un título identificador (Inicio, Mesas, Marketplace, Mensajes y Mi Perfil). Por ahora `/` abre Inicio con su título y una cabecera con la ciudad provisional «La Paz», búsqueda y notificaciones; sus acciones, el contenido de producto y la sesión siguen pendientes. Las demás rutas muestran únicamente su título y el layout de autenticación queda pendiente. No adelantar contenido de pantallas, otros componentes, estilos, temas ni animaciones de producto.
 
 Todavía no se han elegido paquetes de estado ni integraciones. No introducir otro gestor de paquetes o framework sin actualizar la decisión y la documentación. Mantener el nombre MeepleWorld y la interfaz en español, con lanzamiento inicial en México e importes en MXN. Los pagos y las entregas se acuerdan entre usuarios.
 
@@ -29,15 +29,16 @@ frontend/
 ├── pubspec.lock
 ├── analysis_options.yaml
 ├── assets/
+│   ├── custom/             # icono SVG de ubicación entregado por el responsable
 │   └── fonts/              # archivos Jeko registrados en pubspec.yaml
 ├── lib/
 │   ├── main.dart           # arranque
 │   ├── app.dart            # WidgetsApp.router y ciclo de vida del router
 │   ├── routing/            # go_router: cinco rutas dentro de la ShellRoute principal
 │   ├── layouts/            # layout principal y fondo radial
-│   ├── components/         # contenedor de vidrio reutilizable
+│   ├── components/         # contenedor y botón de vidrio reutilizables
 │   ├── navigation/         # secciones y menú inferior flotante
-│   └── views/              # vistas provisionales y título compartido
+│   └── views/              # vistas provisionales, cabecera de Inicio y título compartido
 ├── android/                # proyecto Android generado por Flutter
 └── ios/                    # proyecto iOS generado por Flutter
 ```
@@ -52,9 +53,13 @@ El frontend `frontend/` arranca con el nombre MeepleWorld y `WidgetsApp.router`.
 
 `MainBottomNavigationBar`, en `lib/navigation/`, muestra cinco iconos de HugeIcons: `strokeRoundedHome02`, `strokeRoundedTableRound`, `strokeRoundedStore01`, `strokeRoundedMessageSquare` y `strokeRoundedUser`. Un círculo blanco resalta la ruta activa; cada botón tiene etiqueta semántica en español y estado de selección. El menú se mantiene abajo con márgenes, dentro de la zona segura; cambiar de sección usa `context.go` y no acumula páginas de pestañas ni incorpora animaciones. `MainSection` centraliza las etiquetas, rutas e iconos y deriva la selección de la ubicación del router.
 
-`GlassContainer`, en `lib/components/glass_container.dart`, encapsula blanco al 30%, `BackdropFilter` con `ImageFilter.blur(sigmaX: 8, sigmaY: 8)` y borde interior de 1 píxel lógico. Un `CustomPainter` dibuja el degradado de `#F1E7FC` (superior izquierda) a `#DFC7FE` (inferior derecha) solo en el borde. Acepta contenido, radio y padding para reutilizar el estilo; el menú lo usa con forma de cápsula. Estos componentes y las cinco vistas provisionales con sus títulos están autorizados; el contenido y los demás diseños siguen pendientes.
+`GlassContainer`, en `lib/components/glass_container.dart`, encapsula blanco al 30%, `BackdropFilter` con `ImageFilter.blur(sigmaX: 8, sigmaY: 8)` y borde interior de 1 píxel lógico. Un `CustomPainter` dibuja el degradado de `#F1E7FC` (superior izquierda) a `#DFC7FE` (inferior derecha) solo en el borde. Acepta contenido, radio y padding para reutilizar el estilo; el menú lo usa con forma de cápsula. `GlassButton` reutiliza esa superficie con altura de 56 y etiquetas semánticas; sus acciones son opcionales y accesibilidad lo identifica como deshabilitado cuando no tiene una acción conectada.
+
+`HomeHeader`, en `lib/views/home_header.dart`, aparece únicamente en Inicio, con márgenes laterales de 24 y superior de 16 dentro de la zona segura. Muestra una cápsula con «La Paz» en Jeko de 18, peso 600, y el SVG original `assets/custom/location_filled.svg` a 18, conservando su degradado. A la derecha hay dos botones circulares de 56 con `strokeRoundedSearch01` y `strokeRoundedNotification01`, a 24 y trazo 1.7. El texto y los HugeIcons usan `#343136`; el texto de ciudad se adapta al ancho con elipsis. El SVG se registra en `pubspec.yaml` y se carga con `flutter_svg` 2.3.0, ahora dependencia directa (ya era transitiva de HugeIcons). «La Paz» es un dato visual provisional: no se obtiene del dispositivo ni de la API. Los tres botones aún no tienen acciones; no añadir búsquedas, selección de ciudad, permisos ni notificaciones sin su correspondiente diseño. Estos componentes y las cinco vistas provisionales con sus títulos están autorizados; el contenido y los demás diseños siguen pendientes.
 
 Las fuentes entregadas por el responsable están en `frontend/assets/fonts/` y registradas en `frontend/pubspec.yaml`: `Jeko` con pesos 100–900 normales y cursivos, y `JekoItalicVariable` como fuente fija cursiva independiente, porque el archivo no contiene ejes variables. Los títulos provisionales usan Jeko con peso 600 y tamaño de 24 píxeles lógicos, centrados en el área de contenido mediante `SectionPlaceholder`; no existe un tema global. Los ejemplos de uso y el registro están documentados en [frontend/README.md](../../frontend/README.md).
+
+La cabecera usa el alias `JekoSemiBold`, registrado únicamente con `Jeko Semi Bold.ttf` y peso 600. Los archivos Regular, Medium, Semi Bold y Bold inspeccionados tienen peso interno 400; el alias garantiza el archivo Semi Bold en la ciudad sin cambiar el registro general ni los títulos de las otras vistas.
 
 El backend inicial está implementado en `backend/` con autenticación y recuperación de acceso, perfiles, catálogo/biblioteca, descubrimiento y publicación de mesas, participaciones, ubicación privada y anuncios. El contrato REST se mantiene en [openapi.yaml](../../backend/openapi.yaml). El chat, Socket.IO, BGG, notificaciones, reputación, moderación y mapa siguen pendientes porque no hay contratos implementados para esas funciones.
 
