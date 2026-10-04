@@ -1,8 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:hugeicons/hugeicons.dart';
 
 /// Tarjeta visual de Inicio; no presupone rutas ni acciones de producto.
-class HomeQuickActionCard extends StatelessWidget {
+class HomeQuickActionCard extends StatefulWidget {
   const HomeQuickActionCard({
     required this.label,
     required this.icon,
@@ -29,24 +31,63 @@ class HomeQuickActionCard extends StatelessWidget {
   );
 
   @override
+  State<HomeQuickActionCard> createState() => _HomeQuickActionCardState();
+}
+
+class _HomeQuickActionCardState extends State<HomeQuickActionCard> {
+  bool _isPressed = false;
+  Timer? _releaseTimer;
+
+  void _setPressed(bool pressed) {
+    _releaseTimer?.cancel();
+    if (_isPressed == pressed) return;
+    setState(() => _isPressed = pressed);
+  }
+
+  void _releaseAfterTap() {
+    // Completar el efecto también cuando el toque termina antes del primer frame.
+    _releaseTimer = Timer(
+      const Duration(milliseconds: 150),
+      () => _setPressed(false),
+    );
+  }
+
+  @override
+  void dispose() {
+    _releaseTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final image = backgroundImage;
+    final image = widget.backgroundImage;
+    final disableAnimations = MediaQuery.disableAnimationsOf(context);
 
     return Semantics(
       button: true,
-      enabled: onPressed != null,
-      label: label,
-      onTap: onPressed,
+      enabled: widget.onPressed != null,
+      label: widget.label,
+      onTap: widget.onPressed,
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         excludeFromSemantics: true,
-        onTap: onPressed,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(28),
-          child: ColoredBox(
-            color: color,
-            child: image == null ? _colorContent() : _imageContent(image),
+        onTapDown: (_) => _setPressed(true),
+        onTapUp: (_) => _releaseAfterTap(),
+        onTapCancel: () => _setPressed(false),
+        onTap: widget.onPressed,
+        child: AnimatedScale(
+          scale: _isPressed && !disableAnimations ? 0.95 : 1,
+          duration: disableAnimations
+              ? Duration.zero
+              : const Duration(milliseconds: 150),
+          curve: Curves.easeOutCubic,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: ColoredBox(
+              color: widget.color,
+              child: image == null ? _colorContent() : _imageContent(image),
+            ),
           ),
         ),
       ),
@@ -55,26 +96,26 @@ class HomeQuickActionCard extends StatelessWidget {
 
   Widget _colorContent() {
     return Padding(
-      padding: const EdgeInsets.all(contentPadding),
+      padding: const EdgeInsets.all(HomeQuickActionCard.contentPadding),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: iconBadgeSize,
-            height: iconBadgeSize,
+            width: HomeQuickActionCard.iconBadgeSize,
+            height: HomeQuickActionCard.iconBadgeSize,
             decoration: const BoxDecoration(
               color: Color(0x33FFFFFF),
               shape: BoxShape.circle,
             ),
             child: Center(
-              child: HugeIcon(icon: icon, size: 24, strokeWidth: 1.7),
+              child: HugeIcon(icon: widget.icon, size: 24, strokeWidth: 1.7),
             ),
           ),
           const Spacer(),
-          const SizedBox(height: labelSpacing),
+          const SizedBox(height: HomeQuickActionCard.labelSpacing),
           Padding(
             padding: const EdgeInsets.only(left: 6),
-            child: Text(label, style: labelStyle),
+            child: Text(widget.label, style: HomeQuickActionCard.labelStyle),
           ),
         ],
       ),
@@ -101,7 +142,7 @@ class HomeQuickActionCard extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.all(contentPadding + 4),
+          padding: const EdgeInsets.all(HomeQuickActionCard.contentPadding + 4),
           child: Align(
             alignment: Alignment.bottomLeft,
             child: Row(
@@ -109,7 +150,7 @@ class HomeQuickActionCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    label.replaceFirst(' ', '\n'),
+                    widget.label.replaceFirst(' ', '\n'),
                     style: const TextStyle(
                       fontFamily: 'JekoRegular',
                       fontWeight: FontWeight.w600,
@@ -121,7 +162,7 @@ class HomeQuickActionCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 HugeIcon(
-                  icon: icon,
+                  icon: widget.icon,
                   size: 28,
                   strokeWidth: 2.3,
                   color: const Color(0xFFFFFFFF),

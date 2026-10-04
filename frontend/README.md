@@ -78,6 +78,8 @@ El texto de ciudad usa el alias `JekoSemiBold`, registrado con el archivo `Jeko 
 
 ## Saludo y accesos de Inicio
 
+Las cinco tarjetas se reducen visualmente a escala `0.95` al presionarlas, con transición de 150 ms y curva `easeOutCubic`. Al soltar regresan suavemente a su tamaño, completando el efecto también en toques rápidos; al cancelar el gesto se restaura la escala. El layout y el área táctil permanecen fijos y la preferencia del sistema de desactivar animaciones se respeta. Este cambio no incorpora acciones de producto. Su revisión visual queda a cargo del responsable; no se compiló ni ejecutó para este ajuste.
+
 `HomeScreen` recibe `userName`, con el valor provisional «Enrique», y muestra «Hola, Enrique» como encabezado con Jeko Semi Bold a 28. El nombre visible de la cuenta se conectará cuando exista sesión. El saludo reemplaza el título centrado de Inicio y la pantalla permite desplazarse sin mover el menú inferior.
 
 `HomeQuickActions` compone un grid de dos columnas con márgenes laterales de 32 y separación de 12. Crear mesa ocupa las dos primeras filas de la izquierda; Ver mapa y Mi ludoteca están a su derecha; Mis amigos y Marketplace quedan en la última fila. La altura se calcula según el ancho y el tamaño de texto del sistema, permitiendo que las etiquetas se ajusten sin recortarse.
