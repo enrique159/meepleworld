@@ -35,6 +35,8 @@ El código Flutter está organizado por funcionalidades: `app` compone el arranq
 
 Las fuentes Jeko entregadas para la identidad visual ya están registradas como recursos locales del frontend. Su uso está documentado en la [guía del frontend](frontend/README.md); los títulos provisionales usan Jeko, sin un tema global.
 
+Android ya utiliza el icono oficial de MeepleWorld: ilustración con su degradado original sobre blanco puro, capas adaptativas y versión monocromática para los colores personalizados del sistema en launchers compatibles. También están generados los PNG para versiones anteriores y el archivo para Google Play. Los originales y recursos se documentan en la [guía del icono](frontend/README.md#icono-oficial-de-android); el icono oficial de iOS y la publicación en tiendas siguen pendientes.
+
 ### Arranque rápido del frontend
 
 Ejecuta el proyecto desde su propio directorio:

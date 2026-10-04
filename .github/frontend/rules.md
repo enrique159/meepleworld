@@ -18,7 +18,7 @@ Estas reglas se aplican a `frontend/`, incluidos sus proyectos nativos Android e
 | Pruebas previstas | `flutter_test` e `integration_test` cuando se implementen funcionalidades; no hay suite Dart. |
 | Depuración Android | Teléfono físico: primero USB; si no hay uno, el ya configurado por Wi-Fi. No usar emuladores Android. |
 
-Implementar únicamente el diseño autorizado por el responsable: layout principal, fondo radial, menú inferior flotante con HugeIcons, contenedor y botones de vidrio reutilizables, cabecera de Inicio y cinco vistas provisionales con un título identificador (Inicio, Mesas, Marketplace, Mensajes y Mi Perfil). Por ahora `/` abre Inicio con su título y una cabecera con la ciudad provisional «La Paz», búsqueda y notificaciones; sus acciones, el contenido de producto y la sesión siguen pendientes. Las demás rutas muestran únicamente su título y el layout de autenticación queda pendiente. No adelantar contenido de pantallas, otros componentes, estilos, temas ni animaciones de producto.
+Implementar únicamente el diseño autorizado por el responsable: layout principal, fondo radial, menú inferior flotante con HugeIcons, contenedor y botones de vidrio reutilizables, cabecera de Inicio, icono oficial de Android y cinco vistas provisionales con un título identificador (Inicio, Mesas, Marketplace, Mensajes y Mi Perfil). Por ahora `/` abre Inicio con su título y una cabecera con la ciudad provisional «La Paz», búsqueda y notificaciones; sus acciones, el contenido de producto y la sesión siguen pendientes. Las demás rutas muestran únicamente su título y el layout de autenticación queda pendiente. No adelantar contenido de pantallas, otros componentes, estilos, temas ni animaciones de producto.
 
 Todavía no se han elegido paquetes de estado ni integraciones. No introducir otro gestor de paquetes o framework sin actualizar la decisión y la documentación. Mantener el nombre MeepleWorld y la interfaz en español, con lanzamiento inicial en México e importes en MXN. Los pagos y las entregas se acuerdan entre usuarios.
 
@@ -214,7 +214,15 @@ Usar `flutter doctor -v` para comprobar la instalación. Generar `ios/` no confi
 | `flutter build ios --simulator` | Compilar para simulador iOS con Xcode configurado. |
 | `flutter test` | Futuro: ejecutar las pruebas cuando existan funcionalidades y suite. |
 
-Los directorios nativos forman parte del frontend; cachés, rutas locales y artefactos de compilación están excluidos de Git mediante sus archivos `.gitignore`. Los iconos y recursos de arranque generados son provisionales y no definen la identidad visual. El layout principal no necesita una conexión al backend para arrancar.
+Los directorios nativos forman parte del frontend; cachés, rutas locales y artefactos de compilación están excluidos de Git mediante sus archivos `.gitignore`. El icono iOS y los recursos de arranque siguen siendo provisionales. El layout principal no necesita una conexión al backend para arrancar.
+
+### Icono oficial de Android
+
+El diseño aprobado está en los tres originales de `frontend/`: `app-icon.png` como referencia de composición, `app-icon-illustration.svg` con degradado vertical `#C790EA` → `#515184` y `app-icon-illustration-monocrome.svg` como silueta blanca con los ojos transparentes. Mantener esos nombres y conservar los originales. El icono normal tiene fondo blanco puro (`#FFFFFF`). No alterar el trazado, los huecos ni los colores al generar recursos.
+
+Android utiliza vectores nativos para primer plano y monocromo, con fondo definido como color. Ambos tienen lienzo de 108 × 108 dp, escala `0.0703125` y traslación `(27.0703125, 28.79296875)`, reproduciendo la composición de referencia en el área visible de 72 × 72 dp; el contenido queda dentro de la zona segura central de 66 dp. Mantener geometría idéntica entre ambas capas y la regla `evenOdd`; el sistema aplica las máscaras. Los recursos `mipmap-anydpi-v26` habilitan el icono adaptativo y `mipmap-anydpi-v33` añaden `<monochrome>` para los colores personalizados en launchers compatibles. El fondo de la apariencia temática lo controla Android y no tiene que ser blanco.
+
+Los PNG `mipmap-*` de 48, 72, 96, 144 y 192 px conservan compatibilidad con API 24–25. La exportación para Google Play está en `frontend/branding/android/google_play_icon.png`: 512 × 512 px, PNG de 32 bits, sRGB, fondo blanco opaco, sin máscara ni sombra exterior. Las fuentes y especificaciones se detallan en el [README del frontend](../../frontend/README.md#icono-oficial-de-android). No añadir dependencias Flutter para recursos que resuelve Android de forma nativa. El icono oficial de iOS sigue pendiente.
 
 ## Verificación
 

@@ -4,7 +4,23 @@ Proyecto Flutter exclusivamente para Android e iOS, con layout principal y naveg
 
 Las decisiones técnicas, el alcance autorizado y las instrucciones de implementación se mantienen en las [reglas del frontend](../.github/frontend/rules.md).
 
-La base se creó con Flutter 3.47.5 del canal estable y Dart 3.13.4. Las dependencias y su resolución se mantienen en `pubspec.yaml` y `pubspec.lock`; este directorio no utiliza npm. Los iconos y recursos nativos generados por Flutter son provisionales.
+La base se creó con Flutter 3.47.5 del canal estable y Dart 3.13.4. Las dependencias y su resolución se mantienen en `pubspec.yaml` y `pubspec.lock`; este directorio no utiliza npm. Android utiliza el icono oficial de MeepleWorld; el icono iOS y los recursos de arranque siguen siendo provisionales.
+
+## Icono oficial de Android
+
+Los originales entregados se conservan junto a `pubspec.yaml`: [app-icon.png](app-icon.png) es la referencia de composición de 1024 × 1024 px, [app-icon-illustration.svg](app-icon-illustration.svg) contiene la ilustración con su degradado y [app-icon-illustration-monocrome.svg](app-icon-illustration-monocrome.svg) contiene la silueta blanca con ojos transparentes. El fondo del icono normal es blanco puro (`#FFFFFF`). No son recursos de la interfaz Flutter y no necesitan registrarse en `flutter.assets`.
+
+Los recursos nativos están en `android/app/src/main/res/`:
+
+- `drawable/ic_launcher_foreground.xml` conserva el trazado, la regla de relleno `evenOdd` y el degradado vertical original de `#C790EA` a `#515184`.
+- `drawable/ic_launcher_monochrome.xml` conserva la misma geometría y sus huecos, con relleno blanco para que Android aplique el color del tema.
+- `values/colors.xml` define el fondo blanco.
+- `mipmap-anydpi-v26/ic_launcher.xml` combina fondo y primer plano desde Android 8; `mipmap-anydpi-v33/ic_launcher.xml` incorpora la capa monocromática desde Android 13.
+- Los cinco `mipmap-*/ic_launcher.png` reproducen la referencia en 48, 72, 96, 144 y 192 px para Android 7, que sigue dentro del mínimo API 24.
+
+Ambos vectores usan un lienzo de 108 × 108 dp. La ilustración se centra con escala `0.0703125` y traslación `(27.0703125, 28.79296875)`, para reproducir el tamaño relativo del original dentro del área visible central de 72 × 72 dp. Su contenido queda dentro de la zona segura central de 66 dp. El sistema aplica la máscara del launcher; las capas no incluyen esquinas redondeadas ni sombras exteriores. Los iconos con colores personalizados requieren que el usuario active los iconos temáticos en un launcher compatible; el fondo de esa apariencia lo determina Android, mientras el icono normal conserva el blanco. Consulta la [guía de iconos adaptativos](https://developer.android.com/develop/ui/compose/system/icon_design_adaptive).
+
+[branding/android/google_play_icon.png](branding/android/google_play_icon.png) es la exportación para la ficha de Google Play: cuadrada, 512 × 512 px, PNG de 32 bits, sRGB y fondo blanco opaco, sin máscara ni sombra exterior. Es independiente del icono instalado. Consulta las [especificaciones de Google Play](https://developer.android.com/distribute/google-play/resources/icon-design-specifications). La firma y publicación en tiendas siguen pendientes; este cambio no incorpora variantes ni iconos oficiales de iOS.
 
 ## Arquitectura
 
@@ -152,6 +168,8 @@ Verificación del layout y rutas del 2 de octubre de 2026: `dart format --output
 Verificación del menú flotante del 2 de octubre de 2026: formato y `flutter analyze` pasaron; `flutter build apk --debug` generó el APK y `flutter run --debug --no-resident` lo instaló y ejecutó en el Pixel 8a físico por Wi-Fi, al no haber un teléfono conectado por USB. Se tocaron Mesas, Marketplace, Mensajes, Mi Perfil e Inicio, y la jerarquía de accesibilidad confirmó en cada paso una única sección seleccionada y los cinco botones visibles. Las capturas de Inicio y Mi Perfil permitieron revisar el menú, el borde, el círculo activo y las zonas seguras. La app quedó activa en Inicio; la revisión de logs de Flutter no mostró errores. Los enlaces locales y `git diff --check` pasaron. Las vistas siguen vacías y la verificación iOS continúa pendiente por falta de Xcode completo.
 
 Verificación de los títulos del 2 de octubre de 2026: formato y `flutter analyze` pasaron. `flutter run --debug --no-resident` compiló el APK, lo instaló y ejecutó en el Pixel 8a físico por Wi-Fi. Se comprobó que Inicio, Mesas, Marketplace, Mensajes y Mi Perfil muestran su título y que coincide con la selección del menú. La captura de Inicio permitió revisar su presentación centrada; la app quedó en esa sección. Los enlaces locales y `git diff --check` pasaron. iOS sigue sin verificar por falta de Xcode completo.
+
+Verificación del icono Android del 4 de octubre de 2026: formato, `flutter analyze`, `flutter build apk --debug`, XML y enlaces locales pasaron. El APK se instaló y ejecutó en el Pixel 8a físico por Wi-Fi con Android 17 (API 37), al no haber un teléfono por USB. La ficha de información de MeepleWorld mostró el icono adaptativo con la ilustración, el degradado, los ojos y el fondo blanco correctos. El XML compilado de API 33 incluye fondo, primer plano y monocromo. La comparación de una renderización vectorial con la referencia confirmó la composición; el contorno queda a un máximo de 30.22 dp del centro, dentro de la zona segura de radio 33 dp. Se verificaron los cinco tamaños PNG y la exportación Google Play de 44 161 bytes, RGBA de 8 bits, alfa opaco y perfil sRGB. Las vistas de colores personalizados son simulaciones; no se modificaron las preferencias del launcher ni se verificó en el teléfono un cambio de color. Android 7 e iOS no se verificaron en dispositivos.
 
 ## Backend e integraciones pendientes
 
