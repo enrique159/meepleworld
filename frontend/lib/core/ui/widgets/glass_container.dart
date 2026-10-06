@@ -2,23 +2,27 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/widgets.dart';
 
+import '../styles/glass_border_style.dart';
+
 /// Superficie de vidrio compartida por los componentes del diseño aprobado.
 class GlassContainer extends StatelessWidget {
   const GlassContainer({
     required this.child,
     this.borderRadius = const BorderRadius.all(Radius.circular(24)),
     this.padding = EdgeInsets.zero,
+    this.borderStyle = GlassBorderStyle.lightBackground,
     super.key,
   });
 
   final Widget child;
   final BorderRadius borderRadius;
   final EdgeInsetsGeometry padding;
+  final GlassBorderStyle borderStyle;
 
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
-      foregroundPainter: _GlassBorderPainter(borderRadius),
+      foregroundPainter: _GlassBorderPainter(borderRadius, borderStyle),
       child: ClipRRect(
         borderRadius: borderRadius,
         child: BackdropFilter(
@@ -34,15 +38,10 @@ class GlassContainer extends StatelessWidget {
 }
 
 class _GlassBorderPainter extends CustomPainter {
-  const _GlassBorderPainter(this.borderRadius);
+  const _GlassBorderPainter(this.borderRadius, this.borderStyle);
 
   final BorderRadius borderRadius;
-
-  static const _gradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [Color(0xFFF1E7FC), Color(0xFFDFC7FE)],
-  );
+  final GlassBorderStyle borderStyle;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -52,7 +51,7 @@ class _GlassBorderPainter extends CustomPainter {
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1
-      ..shader = _gradient.createShader(bounds);
+      ..shader = borderStyle.gradient.createShader(bounds);
 
     // Centrar el trazo dentro de los límites conserva el borde completo de 1 px.
     canvas.drawRRect(borderRadius.toRRect(bounds).deflate(0.5), paint);
@@ -60,5 +59,6 @@ class _GlassBorderPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_GlassBorderPainter oldDelegate) =>
-      borderRadius != oldDelegate.borderRadius;
+      borderRadius != oldDelegate.borderRadius ||
+      borderStyle != oldDelegate.borderStyle;
 }

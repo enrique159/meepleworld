@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:meepleworld/app/router/app_routes.dart';
+import 'package:meepleworld/core/ui/styles/glass_border_style.dart';
 import 'package:meepleworld/core/ui/widgets/glass_button.dart';
 
 class AuthHomeScreen extends StatelessWidget {
@@ -23,6 +24,7 @@ class AuthHomeScreen extends StatelessWidget {
           onPressed: () => context.go(AppRoutes.signIn),
           height: 72,
           padding: EdgeInsets.zero,
+          borderStyle: GlassBorderStyle.coloredBackground,
           child: const Text(
             'Ya tengo una cuenta',
             textAlign: TextAlign.center,

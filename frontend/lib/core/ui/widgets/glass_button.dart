@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 
+import '../styles/glass_border_style.dart';
 import 'glass_container.dart';
 
 /// Botón de cápsula que reutiliza la superficie de vidrio del menú inferior.
@@ -10,6 +11,7 @@ class GlassButton extends StatelessWidget {
     this.onPressed,
     this.height = 56,
     this.padding = const EdgeInsets.symmetric(horizontal: 20),
+    this.borderStyle = GlassBorderStyle.lightBackground,
     super.key,
   });
 
@@ -18,6 +20,7 @@ class GlassButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final double height;
   final EdgeInsetsGeometry padding;
+  final GlassBorderStyle borderStyle;
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +37,7 @@ class GlassButton extends StatelessWidget {
         child: GlassContainer(
           borderRadius: BorderRadius.circular(999),
           padding: padding,
+          borderStyle: borderStyle,
           child: SizedBox(
             height: height,
             child: Center(widthFactor: 1, child: child),
