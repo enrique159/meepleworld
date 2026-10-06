@@ -11,13 +11,6 @@ async function bootstrap(): Promise<void> {
   const config = readAppConfig()
   const app = await NestFactory.create(AppModule)
   app.setGlobalPrefix('api/v1')
-  app.enableCors({
-    origin: config.corsOrigins,
-    credentials: true,
-    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Accept', 'Content-Type', 'Authorization', 'X-Request-Id'],
-    exposedHeaders: ['X-Request-Id'],
-  })
   app.use(requestIdMiddleware)
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,

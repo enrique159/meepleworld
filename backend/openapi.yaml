@@ -24,7 +24,7 @@ paths:
   /auth/register:
     post:
       operationId: register
-      description: El servidor asigna un username único con user, timestamp Unix en milisegundos y cinco dígitos aleatorios. No se recibe username en el registro.
+      description: El servidor asigna un username único con user, timestamp Unix en milisegundos y cinco dígitos aleatorios. No se recibe username en el registro. En development y test el correo queda verificado sin token ni envío; en production requiere confirmación por correo. El registro no crea una sesión.
       requestBody:
         required: true
         content:
@@ -35,11 +35,11 @@ paths:
               required: [displayName, email, password]
               properties:
                 displayName: { type: string, minLength: 1, maxLength: 120 }
-                email: { type: string, format: email }
+                email: { type: string, format: email, maxLength: 254 }
                 password: { type: string, minLength: 12, maxLength: 128 }
       responses:
         '201':
-          description: Cuenta creada con username automático; debe verificarse el correo antes de iniciar sesión.
+          description: Cuenta creada. Consultar emailVerified para saber si ya puede iniciar sesión.
           content:
             application/json:
               schema: { $ref: '#/components/schemas/RegistrationResponse' }
@@ -55,35 +55,50 @@ paths:
           application/json:
             schema:
               type: object
+              additionalProperties: false
               required: [email, password]
               properties:
-                email: { type: string, format: email }
-                password: { type: string, minLength: 1 }
+                email: { type: string, format: email, maxLength: 254 }
+                password: { type: string, minLength: 1, maxLength: 128 }
       responses:
         '200':
-          description: Token de acceso en JSON y renovación rotada en cookie HttpOnly.
+          description: Tokens de acceso y renovación en JSON. El cliente móvil guarda la renovación en almacenamiento seguro; el acceso se envía como bearer. Usar HTTPS fuera de desarrollo.
           headers:
-            Set-Cookie: { schema: { type: string } }
+            Cache-Control: { schema: { type: string, const: no-store } }
           content:
             application/json:
               schema: { $ref: '#/components/schemas/SessionResponse' }
         '401': { $ref: '#/components/responses/ApiError' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '403': { $ref: '#/components/responses/ApiError' }
+        '429': { $ref: '#/components/responses/ApiError' }
   /auth/refresh:
     post:
       operationId: refreshSession
+      description: No requiere access token. Exige la renovación en JSON, comprueba sesión y cuenta, rota la credencial y revoca la sesión ante reutilización. No acepta cookies.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RefreshTokenInput' }
       responses:
         '200':
-          description: Emite un nuevo access token y rota la cookie HttpOnly.
+          description: Emite un nuevo access token y un nuevo refresh token. La renovación anterior deja de ser válida.
+          headers:
+            Cache-Control: { schema: { type: string, const: no-store } }
           content:
             application/json:
               schema: { $ref: '#/components/schemas/SessionResponse' }
         '401': { $ref: '#/components/responses/ApiError' }
+        '400': { $ref: '#/components/responses/ApiError' }
+        '429': { $ref: '#/components/responses/ApiError' }
   /auth/logout:
     post:
       operationId: logout
       security: [{ bearerAuth: [] }]
       responses:
         '204': { description: Sesión revocada. }
+        '401': { $ref: '#/components/responses/ApiError' }
   /auth/me:
     get:
       operationId: getCurrentSession
@@ -458,8 +473,8 @@ components:
         userId: { type: string, format: uuid }
         username: { $ref: '#/components/schemas/Username' }
         email: { type: string, format: email }
-        emailVerified: { type: boolean, const: false }
-        verificationEmailQueued: { type: boolean, const: true }
+        emailVerified: { type: boolean, description: true en development/test; false hasta confirmar en production. }
+        verificationEmailQueued: { type: boolean, description: false en development/test; true cuando se prepara verificación en production. }
     PrivateProfile:
       type: object
       required: [id, username, displayName, email, emailVerified, avatarUrl, city]
@@ -483,10 +498,23 @@ components:
         memberSince: { type: string, format: date-time }
     SessionResponse:
       type: object
-      required: [accessToken, user]
+      required: [accessToken, refreshToken, expiresIn, refreshExpiresIn, user]
       properties:
         accessToken: { type: string }
+        refreshToken: { type: string, description: Credencial opaca rotativa para almacenamiento seguro móvil. Nunca registrar en logs. }
+        expiresIn: { type: integer, minimum: 60, description: Duración del acceso en segundos., example: 900 }
+        refreshExpiresIn: { type: integer, minimum: 86400, description: Duración de la renovación en segundos desde esta emisión., example: 2592000 }
         user: { $ref: '#/components/schemas/PrivateProfile' }
+    RefreshTokenInput:
+      type: object
+      additionalProperties: false
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+          minLength: 80
+          maxLength: 80
+          pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.[A-Za-z0-9_-]{43}$'
     UpdateProfile:
       type: object
       additionalProperties: false

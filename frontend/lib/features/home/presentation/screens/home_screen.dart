@@ -4,9 +4,8 @@ import '../widgets/home_header.dart';
 import '../widgets/home_quick_actions.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({this.userName = 'Enrique', super.key});
+  const HomeScreen({required this.userName, super.key});
 
-  // Dato visual provisional; recibirá el nombre visible de la cuenta con sesión.
   final String userName;
 
   @override

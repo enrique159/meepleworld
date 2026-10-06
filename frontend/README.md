@@ -1,6 +1,6 @@
 # Frontend de MeepleWorld
 
-Proyecto Flutter exclusivamente para Android e iOS, con layout principal y navegación entre cinco vistas provisionales. La ruta `/` abre Inicio con el fondo radial, el menú inferior flotante, la cabecera, el saludo y los cinco accesos aprobados. El contenido de producto, las acciones de la cabecera y de las tarjetas, la autenticación y la integración con el backend están pendientes; los demás componentes, estilos, temas y animaciones se definirán cuando el responsable entregue su diseño.
+Proyecto Flutter exclusivamente para Android e iOS, con layout principal, cinco vistas provisionales y layout de autenticación básico. Registro e inicio de sesión consumen la API real; la sesión se guarda mediante renovación segura y se restaura al arrancar. El contenido de producto y las acciones visuales de Inicio siguen pendientes. Las pantallas de auth son intencionadamente básicas; su diseño definitivo se incorporará después.
 
 Las decisiones técnicas, el alcance autorizado y las instrucciones de implementación se mantienen en las [reglas del frontend](../.github/frontend/rules.md).
 
@@ -24,11 +24,11 @@ Ambos vectores usan un lienzo de 108 × 108 dp. La ilustración se centra con es
 
 ## Arquitectura
 
-La organización implementada separa `lib/app/` (arranque, router y shell global), `lib/core/` (componentes e infraestructura compartidos) y `lib/features/` (módulos de Inicio, Mesas, Marketplace, Mensajes y Perfil). Cada funcionalidad separa sus pantallas en `presentation/screens/` y sus componentes en `presentation/widgets/`; estado y acceso a datos se incorporarán cuando exista comportamiento real. La presentación con estado seguirá MVVM y los casos de uso serán opcionales.
+La organización separa `lib/app/` (composición, router y layouts), `lib/core/` (componentes, cliente HTTP y almacenamiento seguro) y `lib/features/` (Auth, Inicio, Mesas, Marketplace, Mensajes y Perfil). Auth usa MVVM con `ChangeNotifier` y `ListenableBuilder`, modelos inmutables, servicio API y repositorio inyectados por constructor; no incorpora un gestor de estado externo.
 
 Los nombres de pantallas usan el sufijo `Screen`, con archivos como `home_screen.dart`; `home_header.dart` está dentro de los widgets de Inicio. Los archivos y carpetas usan `snake_case` y los tipos `UpperCamelCase`. Las responsabilidades, límites de dependencia, convenciones están en [arquitectura del frontend](../.github/frontend/rules.md#arquitectura-organización-y-nombres).
 
-La organización por funcionalidades contiene 20 archivos Dart; las carpetas globales anteriores fueron retiradas. Las capas de estado, datos y dominio y las carpetas de pruebas se crearán cuando haya código que las necesite. Los apartados siguientes describen esta estructura y sus rutas actuales.
+Las capas de estado y datos existen en `features/auth`. Los demás módulos siguen siendo visuales; no hay casos de uso ni suite de frontend. Los apartados siguientes describen las rutas y los componentes actuales.
 
 ## Layout principal y rutas
 
@@ -36,17 +36,46 @@ La organización por funcionalidades contiene 20 archivos Dart; las carpetas glo
 
 | Sección | Ruta | Nombre de ruta |
 | --- | --- | --- |
-| Inicio (inicial) | `/` | `home` |
+| Inicio (con sesión) | `/` | `home` |
 | Mesas | `/mesas` | `tables` |
 | Marketplace | `/marketplace` | `marketplace` |
 | Mensajes | `/mensajes` | `messages` |
 | Mi Perfil | `/mi-perfil` | `profile` |
 
-Todas las vistas comparten fondo y menú; Inicio muestra la cabecera, el saludo y los accesos descritos abajo. `lib/core/ui/widgets/section_placeholder.dart` centraliza el título provisional de las otras cuatro vistas: centrado en el área de contenido restante, con Jeko de 24 píxeles lógicos, peso 600 y color predeterminado `#343136`, marcado como encabezado para accesibilidad. El futuro layout de autenticación tendrá un grupo separado; no se han definido rutas ni pantallas de acceso todavía.
+Las cinco vistas principales comparten fondo y menú; Inicio conserva los componentes visuales aprobados y las otras cuatro el título provisional. Mi Perfil añade Cerrar sesión. Auth utiliza una `ShellRoute` independiente con fondo blanco, zonas seguras, scroll y ancho máximo de 480, sin menú principal. Sus formularios estándar usan el color global y todavía no tienen diseño definitivo.
 
 `lib/app/shell/main_shell.dart` reserva las zonas seguras y el espacio del menú para el contenido, y configura iconos oscuros en las barras del sistema. `lib/app/shell/widgets/main_background.dart` dibuja el fondo con un `RadialGradient` de Flutter, sin imágenes: `#DFC6FE` en 0% y `#F3E6EF` en 100%, ambos totalmente opacos. El centro está en la esquina superior derecha; el eje mayor llega a la inferior izquierda y el eje menor mide la mitad. Esa proporción aproxima la elipse de la referencia recibida y se adapta al tamaño y orientación de la pantalla. El fondo ocupa toda la superficie, incluidas las zonas detrás de las barras del sistema.
 
-La apertura directa de estas rutas es una presentación provisional autorizada para trabajar el diseño: no crea ni simula una sesión y no consulta contenido protegido. La autenticación móvil, el layout de acceso y la redirección según sesión siguen pendientes. La regla de producto de exigir una sesión válida se aplicará antes de incorporar contenido de la plataforma.
+Al arrancar o abrir una ruta, se comprueba/restaura la sesión antes de acceder al layout principal. Sin sesión se abre Iniciar sesión; registrarse no crea una sesión automáticamente. Una renovación inválida limpia credenciales y usuario; un fallo de conexión muestra Reintentar y conserva la renovación segura. El backend todavía tiene lecturas anónimas pendientes de proteger, aunque la navegación móvil ya exige sesión.
+
+## Autenticación y API
+
+| Vista | Ruta |
+| --- | --- |
+| Iniciar sesión | `/auth/iniciar-sesion` |
+| Crear cuenta | `/auth/crear-cuenta` |
+| Comprobar/restaurar sesión | `/auth/sesion` |
+
+Crear cuenta solicita nombre, correo y contraseña de 12–128 caracteres. El servidor genera el username. Los formularios validan campos, deshabilitan envíos repetidos, conservan lo escrito ante errores y muestran el resultado del backend. Tras registrarse, se vuelve a Iniciar sesión con el correo rellenado y el mensaje de verificación correspondiente. En desarrollo y test la cuenta nueva ya queda verificada; después de entrar, Inicio muestra su nombre real.
+
+`AuthApiService` implementa sign up, sign in, refresh y logout sobre el contrato REST. `http` 1.6.0 envía JSON, aplica timeout de 15 segundos y no sigue redirecciones de credenciales. `flutter_secure_storage` 11.2.0 conserva únicamente la renovación, mediante Keystore/Keychain; los access tokens permanecen en memoria. La sesión coordina una sola renovación, la rota antes del vencimiento y comprueba el estado al volver del segundo plano. Mi Perfil permite cerrarla. Si falla el cierre remoto, se elimina la credencial local y se informa de que la revocación remota no pudo confirmarse. No hay cookies ni CORS. [Paquete de almacenamiento](https://pub.dev/packages/flutter_secure_storage), [cliente HTTP](https://pub.dev/packages/http).
+
+Configura `API_BASE_URL` desde `frontend/`. Para un teléfono físico en la misma red del equipo, sustituye la IP de ejemplo por la del equipo:
+
+```sh
+flutter run -d <id-del-dispositivo> --dart-define=API_BASE_URL=http://192.168.1.100:3000/api/v1
+```
+
+Para un Android físico por USB, puedes configurar explícitamente el puerto y usar la URL predeterminada:
+
+```sh
+adb -s <id-del-dispositivo> reverse tcp:3000 tcp:3000
+flutter run -d <id-del-dispositivo> --dart-define=API_BASE_URL=http://127.0.0.1:3000/api/v1
+```
+
+Arranca primero el backend con su configuración y migraciones aplicadas. `localhost` en el teléfono no apunta al equipo sin esa redirección. Cambiar un `dart-define` requiere volver a arrancar la app; hot reload no actualiza la URL. Fuera de debug, `API_BASE_URL` debe usar HTTPS. Android permite HTTP únicamente en su manifest debug y iOS mediante `Runner/Info-Debug.plist`; release/profile conservan ATS. El permiso de red local de iOS tiene una descripción de desarrollo. Las tres configuraciones Runner usan `Runner.entitlements` para Keychain y Android desactiva backup de datos locales. No incluir secretos en parámetros de compilación.
+
+Para comprobarlo manualmente: abre Crear cuenta desde Iniciar sesión, registra nombre/correo/contraseña, inicia sesión y comprueba el saludo; cierra y vuelve a abrir la app para revisar la restauración, y usa Cerrar sesión en Mi Perfil. Comprueba también correo duplicado, contraseña incorrecta y falta de conexión. Estos comandos y recorridos son instrucciones para el responsable; no se ejecutó el frontend en esta entrega. Las pantallas y enlaces de verificación y recuperación y el proveedor real de correo siguen pendientes.
 
 ## Menú flotante y contenedor de vidrio
 
@@ -80,7 +109,7 @@ El texto de ciudad usa el alias `JekoSemiBold`, registrado con el archivo `Jeko 
 
 Las cinco tarjetas se reducen visualmente a escala `0.95` al presionarlas, con transición de 150 ms y curva `easeOutCubic`. Al soltar regresan suavemente a su tamaño, completando el efecto también en toques rápidos; al cancelar el gesto se restaura la escala. El layout y el área táctil permanecen fijos y la preferencia del sistema de desactivar animaciones se respeta. Este cambio no incorpora acciones de producto. Su revisión visual queda a cargo del responsable; no se compiló ni ejecutó para este ajuste.
 
-`HomeScreen` recibe `userName`, con el valor provisional «Enrique», y muestra «Hola, Enrique» como encabezado con Jeko Semi Bold a 28. El nombre visible de la cuenta se conectará cuando exista sesión. El saludo reemplaza el título centrado de Inicio y la pantalla permite desplazarse sin mover el menú inferior.
+`HomeScreen` recibe `userName` desde la sesión real y muestra «Hola» seguido del nombre visible, con Jeko Semi Bold a 28. El saludo reemplaza el título de Inicio y la pantalla permite desplazarse sin mover el menú inferior.
 
 `HomeQuickActions` compone un grid de dos columnas con márgenes laterales de 32 y separación de 12. Crear mesa ocupa las dos primeras filas de la izquierda; Ver mapa y Mi ludoteca están a su derecha; Mis amigos y Marketplace quedan en la última fila. La altura se calcula según el ancho y el tamaño de texto del sistema, permitiendo que las etiquetas se ajusten sin recortarse.
 
@@ -96,7 +125,7 @@ Las cinco tarjetas se reducen visualmente a escala `0.95` al presionarlas, con t
 
 Crear mesa utiliza [la fotografía vertical local](assets/images/create_table_background.jpg), recreada con ImageGen a partir de la referencia entregada en 1024 × 1536 (2:3), con `BoxFit.cover`. Flutter añade el degradado morado, el texto blanco Jeko Regular a 22, peso 400 y el icono de suma; el archivo no contiene esos elementos. Su [procedencia y prompt](assets/images/README.md) están documentados junto al recurso. El JPEG está registrado explícitamente en `pubspec.yaml`.
 
-Las cinco tarjetas reciben callbacks opcionales y todavía no tienen acciones conectadas. Accesibilidad las identifica con su nombre como botones deshabilitados, conservando el diseño visible. Mis amigos es únicamente un acceso visual; las relaciones de amistad continúan fuera del alcance de la primera versión. No hay nuevas rutas ni consumo de la API.
+Las cinco tarjetas reciben callbacks opcionales y todavía no tienen acciones conectadas. Accesibilidad las identifica con su nombre como botones deshabilitados, conservando el diseño visible. Mis amigos es únicamente un acceso visual; las relaciones de amistad continúan fuera del alcance de la primera versión. Estos accesos no incorporan rutas ni consumo de contenido; la autenticación se integra por separado.
 
 ## Fuentes tipográficas
 
@@ -187,7 +216,7 @@ Con Xcode y el soporte de simulador configurados:
 flutter build ios --simulator
 ```
 
-No hay suite Dart de pruebas ni funcionalidades de producto. Las pruebas se incorporarán cuando exista comportamiento que verificar. Verificación local del 1 de octubre de 2026: formato y `flutter analyze` pasaron; `flutter build apk --debug` generó el APK y `flutter doctor -v` confirmó las herramientas Android y sus licencias. La app se compiló, instaló y ejecutó mediante `flutter run` en un Pixel 8a físico con Android 17 (API 37), autorizado por USB. Tras volver a abrirla, ADB confirmó su proceso activo y `MainActivity` en primer plano. La compilación iOS sigue pendiente.
+No hay suite Dart de pruebas; auth ya incorpora comportamiento real. Por petición del responsable, esta entrega solo comprueba formato y análisis estático: no se crean ni ejecutan pruebas ni se compila, instala o abre la app. La comprobación de registro, acceso, persistencia, errores y cierre será manual por el responsable. Los registros siguientes corresponden a entregas anteriores y no acreditan el nuevo flujo de auth.
 
 Verificación del layout y rutas del 2 de octubre de 2026: `dart format --output=none --set-exit-if-changed lib` y `flutter analyze` pasaron; `flutter build apk --debug` generó el APK. Al no haber un teléfono por USB, se compiló, instaló y ejecutó la versión final en el Pixel 8a físico por la conexión Wi-Fi ya configurada. Una captura del dispositivo permitió comprobar el fondo radial a pantalla completa y los iconos oscuros del sistema; ADB confirmó el proceso activo y el arranque no mostró errores de Flutter. Los enlaces locales de la documentación y `git diff --check` también pasaron. No se ha verificado iOS.
 

@@ -102,11 +102,13 @@ function registrationFixture(failures, key = 'uq_users_username') {
   return { auth, register, counts: () => ({ attempts, tokens, emails }) }
 }
 
-test('el registro reintenta una colisión y solo genera token y correo para la cuenta creada', async () => {
+test('el registro reintenta una colisión sin generar token ni correo fuera de producción', async () => {
   const fixture = registrationFixture(1)
   const response = await fixture.register()
   assert.match(response.username, /^user\d{18}$/)
-  assert.deepEqual(fixture.counts(), { attempts: 2, tokens: 1, emails: 1 })
+  assert.deepEqual(fixture.counts(), { attempts: 2, tokens: 0, emails: 0 })
+  assert.equal(response.emailVerified, true)
+  assert.equal(response.verificationEmailQueued, false)
   assert.equal(fixture.auth.toAuthUser({ id: response.userId, username: response.username }).username, response.username)
 })
 

@@ -37,6 +37,14 @@ export interface SessionTokens {
   user: AuthUserView
 }
 
+export interface RegistrationResponse {
+  userId: string
+  username: string
+  email: string
+  emailVerified: boolean
+  verificationEmailQueued: boolean
+}
+
 @Injectable()
 export class AuthService {
   private readonly config = readAppConfig()
@@ -47,25 +55,27 @@ export class AuthService {
     private readonly mailbox: MailboxService,
   ) {}
 
-  async register(input: RegisterDto): Promise<{ userId: string; username: string; email: string; emailVerified: false; verificationEmailQueued: true }> {
+  async register(input: RegisterDto): Promise<RegistrationResponse> {
     const email = input.email.trim().toLowerCase()
     const now = new Date()
-    const token = randomBytes(32).toString('base64url')
+    const token = this.config.nodeEnv === 'production' ? randomBytes(32).toString('base64url') : null
     const expiresAt = new Date(now.getTime() + 30 * 60_000)
 
     const passwordHash = await argon2.hash(input.password, PASSWORD_HASH_OPTIONS)
-    const user = await this.createRegisteredUser(input, email, passwordHash, token, expiresAt)
+    const user = await this.createRegisteredUser(input, email, passwordHash, token, expiresAt, now)
 
-    try {
-      await this.mailbox.queue(email, 'verify-email', token, expiresAt)
-    } catch {
-      throw new ServiceUnavailableException('No se pudo preparar el mensaje local de verificación. Puedes volver a solicitarlo.')
+    if (token) {
+      try {
+        await this.mailbox.queue(email, 'verify-email', token, expiresAt)
+      } catch {
+        throw new ServiceUnavailableException('No se pudo preparar el mensaje local de verificación. Puedes volver a solicitarlo.')
+      }
     }
 
-    return { userId: user.id, username: user.username, email: user.email, emailVerified: false, verificationEmailQueued: true }
+    return { userId: user.id, username: user.username, email: user.email, emailVerified: Boolean(user.emailVerifiedAt), verificationEmailQueued: token !== null }
   }
 
-  private async createRegisteredUser(input: RegisterDto, email: string, passwordHash: string, token: string, expiresAt: Date): Promise<UserEntity> {
+  private async createRegisteredUser(input: RegisterDto, email: string, passwordHash: string, token: string | null, expiresAt: Date, now: Date): Promise<UserEntity> {
     for (let attempt = 0; attempt < USERNAME_GENERATION_ATTEMPTS; attempt++) {
       try {
         return await this.database.dataSource.transaction(async (manager) => {
@@ -80,11 +90,11 @@ export class AuthService {
             passwordHash,
             avatarUrl: null,
             city: null,
-            emailVerifiedAt: null,
+            emailVerifiedAt: token ? null : now,
             status: UserStatus.ACTIVE,
           })
           await users.save(createdUser)
-          await manager.getRepository(EmailVerificationTokenEntity).save({
+          if (token) await manager.getRepository(EmailVerificationTokenEntity).save({
             id: randomUUID(),
             userId: createdUser.id,
             tokenHash: hashToken(token),

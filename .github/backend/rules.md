@@ -1,6 +1,6 @@
 # MeepleWorld: reglas del backend
 
-Estado: API REST inicial implementada; las adaptaciones de acceso obligatorio y registro por entorno, junto con las integraciones indicadas, siguen pendientes. Última actualización documental: 4 de octubre de 2026.
+Estado: API REST inicial con autenticación móvil mediante tokens JSON y registro por entorno implementados; acceso obligatorio en todas las lecturas e integraciones indicadas pendientes. Última actualización documental: 6 de octubre de 2026.
 
 Estas reglas se aplican a `backend/` y a sus contratos, datos e integraciones. Leer también [AGENTS.md](../../AGENTS.md), la [definición del producto](../../documentation/idea_design.md) y el [README del backend](../../backend/README.md). Para cambios que afecten al cliente móvil, consultar las [reglas del frontend](../frontend/rules.md). Inspeccionar el estado real antes de implementar: las capacidades previstas no implican que ya existan.
 
@@ -14,8 +14,8 @@ Estas reglas se aplican a `backend/` y a sus contratos, datos e integraciones. L
 | Persistencia | MySQL 8.4 LTS local, TypeORM, `@nestjs/typeorm` y controlador `mysql2`; sin Docker ni Docker Compose. |
 | Contratos | API REST bajo `/api/v1`, documentada con OpenAPI; Socket.IO para chat está pendiente. |
 | Acceso | Cuenta activa, correo verificado y sesión válida para toda la plataforma, incluidas las lecturas; excepciones explícitas para flujos de acceso y health check. Adaptación del backend inicial pendiente. |
-| Verificación de correo | Confirmación por correo en producción; verificación automática de cuentas nuevas en `development` y `test`. Adaptación del registro inicial pendiente. |
-| Pruebas | Suite focalizada de `username` con el runner de Node.js y MySQL temporal opcional. Vitest/Supertest para el resto y la configuración de lint siguen pendientes. |
+| Verificación de correo | Confirmación por correo en producción; verificación automática de cuentas nuevas en `development` y `test`. Implementado para cuentas nuevas; proveedor real de producción pendiente. |
+| Pruebas | Suites focalizadas de autenticación y `username` con el runner de Node.js y MySQL temporal opcional. Vitest/Supertest para el resto y la configuración de lint siguen pendientes. |
 
 MySQL 8.4 LTS sustituye la propuesta inicial de 8.3 por decisión del proyecto. NestJS 12 publica sus paquetes en ESM y su configuración de proyectos ESM utiliza Vitest; consultar la [guía de NestJS 12](https://docs.nestjs.com/migration-guide). Usar `type: module` y resolución `NodeNext`; respetar las extensiones de importación de su salida ESM. No introducir otro gestor de paquetes, ORM o framework sin actualizar la decisión y la documentación.
 
@@ -156,7 +156,7 @@ La decisión depende exclusivamente de `NODE_ENV` validado en el backend, cuyos 
 
 Esta regla se aplica al crear cuentas nuevas. El registro no emite una sesión; el usuario debe iniciar sesión. Mantener las comprobaciones de correo verificado, cuenta activa y sesión en los guards y servicios: fuera de producción se persiste la verificación, no se omite la autorización. El cliente se guía por la respuesta de registro y no elige ni envía el entorno o el estado de verificación. La recuperación de contraseña conserva sus tokens y flujo de correo en ambos casos.
 
-La adaptación está pendiente: el registro inicial todavía guarda `emailVerifiedAt: null`, genera token y prepara correo en todos los entornos admitidos. Al implementarla, actualizar los tipos de respuesta y el contrato OpenAPI de `POST /auth/register`. La configuración actual rechaza producción porque solo existe el adaptador de correo local; habilitarla seguirá requiriendo un proveedor real.
+La verificación por entorno está implementada para cuentas nuevas y documentada en OpenAPI. No altera cuentas anteriores sin verificar. La configuración sigue rechazando producción mientras solo exista correo local; habilitarla exige un proveedor real.
 
 ### Sesiones y credenciales
 
@@ -164,7 +164,7 @@ Usar Argon2id para contraseñas. La API emitirá tokens de acceso de corta durac
 
 Guardar únicamente el hash del token de renovación en el servidor. Rotar al renovar, detectar reutilización y revocar la sesión comprometida. Cerrar sesión elimina la renovación; recuperación de contraseña y suspensión revocan sesiones. Proteger operaciones también con el estado vigente de la cuenta, sin depender solo del contenido de un JWT todavía válido.
 
-La API inicial entrega la renovación mediante una cookie HttpOnly, Secure en producción y con alcance limitado. Mantener esa protección mientras exista el transporte de cookies, incluyendo SameSite, CORS y protección CSRF según el despliegue. La adaptación del contrato al cliente móvil sigue pendiente; el frontend no implementa sesiones. Los requisitos de almacenamiento seguro móvil se mantienen en las [reglas del frontend](../frontend/rules.md#sesiones-integraciones-y-configuración-pendientes).
+La API usa transporte móvil sin cookies: `POST /auth/login` y `/auth/refresh` devuelven `{ accessToken, refreshToken, expiresIn, refreshExpiresIn, user }` en JSON y `Cache-Control: no-store`. Las duraciones son segundos; la renovación se recibe exclusivamente en un DTO JSON `{ refreshToken }`, con formato y propiedades estrictos. El cierre conserva bearer válido y revoca la sesión; si el acceso expiró, el cliente renueva primero. CORS está desactivado, sin lista de orígenes ni política de cookies. Exigir HTTPS fuera del desarrollo local; conservar rotación, hashes, expiración y revocación. Los requisitos del cliente se mantienen en las [reglas del frontend](../frontend/rules.md#sesiones-integraciones-y-configuración-pendientes).
 
 Usar tokens de verificación cuando corresponda y tokens de recuperación de un solo uso, con expiración y hashes en el servidor. Evitar revelar si un correo existe en la respuesta de recuperación. Limitar intentos de acceso, registro, envío de correo e importación. No registrar contraseñas, tokens, mensajes privados completos ni coordenadas privadas en logs. Las acciones administrativas requieren autorización y auditoría.
 
@@ -192,14 +192,13 @@ El backend valida su configuración al iniciar y tiene [backend/.env.example](..
 
 | Proyecto | Variables previstas | Uso |
 | --- | --- | --- |
-| Backend | `NODE_ENV`, `PORT`, `APP_PUBLIC_URL`, `CORS_ORIGINS` | Entorno, puerto, enlaces de cuenta y orígenes permitidos. |
+| Backend | `NODE_ENV`, `PORT`, `APP_PUBLIC_URL` | Entorno, puerto y base reservada para enlaces de cuenta; no es configuración CORS. |
 | Backend | `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | Conexión MySQL local y entornos separados. |
 | Backend | `JWT_ACCESS_SECRET`, `ACCESS_TOKEN_TTL_SECONDS`, `REFRESH_TOKEN_TTL_DAYS` | Firma y duración de sesiones; secreto independiente por entorno. |
-| Backend | `AUTH_COOKIE_SECURE`, `AUTH_COOKIE_SAME_SITE` | Política de cookies; `Secure` obligatorio en producción. |
 | Backend | `MAIL_DRIVER`, `LOCAL_MAILBOX_PATH` | El adaptador local simulado guarda mensajes fuera del control de versiones. |
 | Backend futuro | `BGG_ENABLED`, `BGG_API_TOKEN`, `STORAGE_DRIVER`, `LOCAL_UPLOAD_PATH`, `PUSH_DRIVER` | Integraciones externas pendientes de configurar. |
 
-`NODE_ENV=production` exige confirmación de correo. Con `NODE_ENV=development` o `NODE_ENV=test`, las cuentas nuevas deberán crearse con correo verificado automáticamente; esta adaptación del registro está pendiente. No añadir una bandera independiente para omitir la verificación en producción.
+`NODE_ENV=production` exige confirmación de correo. Con `NODE_ENV=development` o `NODE_ENV=test`, las cuentas nuevas se crean con correo verificado automáticamente. No añadir una bandera independiente para omitir la verificación en producción. `CORS_ORIGINS`, `AUTH_COOKIE_SECURE` y `AUTH_COOKIE_SAME_SITE` se retiraron de la configuración y del ejemplo.
 
 Los nombres específicos de credenciales de hosting, archivos, correo y push se documentarán cuando se elijan sus proveedores. Los adaptadores reales deberán rechazar configuración incompleta; solo desarrollo y pruebas permitirán adaptadores simulados. El modo BGG deshabilitado debe comunicar su indisponibilidad y conservar la biblioteca manual.
 
@@ -220,11 +219,11 @@ Mantener `package-lock.json` y ejecutar los comandos desde `backend/`. MySQL 8.4
 | `npm run migration:revert` | Revertir la última migración, cuando sea reversible y esté autorizado. |
 | `npm run build` | Compilar el backend. |
 | `npm run lint` | Pendiente: definir y configurar ESLint. |
-| `npm test` | Compilar y ejecutar la suite focalizada de `username` con Node.js. La integración MySQL se omite si no se indica `MEEPLEWORLD_TEST_MYSQL_SOCKET`. |
+| `npm test` | Compilar y ejecutar las suites de autenticación y `username` con Node.js. La integración MySQL se omite si no se indica `MEEPLEWORLD_TEST_MYSQL_SOCKET`. |
 
 ## Verificación
 
-Ejecutar las comprobaciones configuradas de tipos, compilación y pruebas para cambios del backend. La suite de `username` verifica validación, colisiones y proyecciones con adaptadores controlados; la integración opcional verifica migraciones reales, unicidad concurrente y recorridos HTTP en una base temporal que crea y elimina. No carga `.env`; requiere un socket local de MySQL temporal con usuario `root` sin contraseña. Ver [backend/README.md](../../backend/README.md#pruebas-de-username). ESLint y la cobertura general con Vitest/Supertest siguen pendientes; sus comandos futuros no deben presentarse como disponibles. Cubrir reglas con efecto real con datos ficticios y adaptadores controlados.
+Ejecutar tipos, compilación y pruebas configuradas para cambios del backend. Las suites de autenticación y `username` verifican comportamiento con adaptadores controlados y datos ficticios; autenticación añade un servidor HTTP temporal y la integración opcional usa MySQL temporal. No cargan `.env` ni usan datos de desarrollo. Ver [backend/README.md](../../backend/README.md#pruebas-de-username). ESLint y Vitest/Supertest siguen pendientes; no presentar sus comandos como disponibles.
 
 Los siguientes escenarios guían las pruebas de las capacidades correspondientes; su inclusión no acredita que exista una suite ni que todas las funciones estén implementadas:
 
@@ -235,4 +234,4 @@ Los siguientes escenarios guían las pruebas de las capacidades correspondientes
 - Sesiones: verificación, recuperación de un solo uso, renovación rotada, reutilización, cierre de sesión, autorización tras revocación.
 - Registro por entorno: en `development` y `test`, verificación persistida al crear la cuenta, respuesta `emailVerified: true`/`verificationEmailQueued: false`, ausencia de token y envío de verificación e inicio de sesión inmediato. En producción, cuenta sin verificar y acceso denegado hasta consumir el token. Usar un adaptador de correo controlado en pruebas y comprobar que la recuperación funciona en ambos casos.
 
-Distinguir API implementada, comportamiento previsto y adaptadores simulados. El frontend todavía no consume ningún endpoint. No afirmar que correo, BGG o push funcionan sin haber integrado y probado su entrega o consumo real.
+Distinguir API implementada, comportamiento previsto y adaptadores simulados. Flutter integra únicamente los endpoints de autenticación; el contenido de producto sigue pendiente. No afirmar que correo, BGG o push funcionan sin integrar y verificar su entrega o consumo real.

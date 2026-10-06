@@ -93,7 +93,10 @@ test('username con migraciones reales, MySQL y API HTTP', { skip: !socketPath },
     const registration = await auth.register(input)
     assert.match(registration.username, /^user\d{18}$/)
     assert.equal((await database.getRepository(UserEntity).findOneByOrFail({ id: registration.userId })).username, registration.username)
-    await auth.verifyEmail(messages[0].token)
+    assert.equal(registration.emailVerified, true)
+    assert.equal(registration.verificationEmailQueued, false)
+    assert.equal(messages.length, 0)
+    assert.ok((await database.getRepository(UserEntity).findOneByOrFail({ id: registration.userId })).emailVerifiedAt)
     const session = await auth.login(input)
     assert.equal(session.user.username, registration.username)
 

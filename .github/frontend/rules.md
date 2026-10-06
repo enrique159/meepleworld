@@ -1,6 +1,6 @@
 # MeepleWorld: reglas del frontend
 
-Estado: Flutter con layout principal, cabecera, saludo y accesos visuales de Inicio y navegación entre cinco vistas provisionales para Android e iOS; contenido de producto, autenticación e integración con la API pendientes. Última actualización documental: 4 de octubre de 2026.
+Estado: Flutter Android/iOS con layout principal y cinco vistas provisionales, layout de acceso básico y autenticación conectada a la API. Contenido de producto e integraciones restantes pendientes. Última actualización documental: 6 de octubre de 2026.
 
 Estas reglas se aplican a `frontend/`, incluidos sus proyectos nativos Android e iOS. Leer también [AGENTS.md](../../AGENTS.md), la [definición del producto](../../documentation/idea_design.md) y el [README del frontend](../../frontend/README.md). Para cambios de contratos o integración, consultar las [reglas del backend](../backend/rules.md). Inspeccionar el estado real antes de implementar: las capacidades previstas no implican que ya existan.
 
@@ -11,16 +11,16 @@ Estas reglas se aplican a `frontend/`, incluidos sus proyectos nativos Android e
 | Proyecto | Flutter independiente con `pubspec.yaml` y `pubspec.lock`; ejecutar Flutter desde `frontend/`. Sin npm ni paquete raíz. |
 | Lenguaje y SDK | Dart y Flutter del canal estable; el requisito de Dart se declara en `frontend/pubspec.yaml`. |
 | Plataformas | Exclusivamente Android e iOS; web y aplicaciones de escritorio fuera del alcance. |
-| Navegación | `go_router`, con `ShellRoute` para el layout principal; 18.0.2 en el lockfile. |
+| Navegación | `go_router` 18.0.2, con `ShellRoute` independientes para los layouts principal y de autenticación; redirección según sesión. |
 | Arquitectura | Organización por funcionalidad (`features`), composición en `app` y elementos compartidos en `core`, implementada para los componentes actuales; presentación con MVVM al incorporar estado y servicios. |
 | Iconos | HugeIcons mediante `hugeicons`; 1.2.0 en el lockfile. |
 | Mapas previstos | Mapbox para mapa y visualización de mesas; listado complementario. Paquetes aún no incorporados. |
-| Pruebas previstas | `flutter_test` e `integration_test` cuando se implementen funcionalidades; no hay suite Dart. |
+| Pruebas previstas | Sin suite Dart. En la entrega de autenticación, el responsable pidió no crear ni ejecutar pruebas de frontend; comprobará manualmente los recorridos. |
 | Depuración Android | Teléfono físico: primero USB; si no hay uno, el ya configurado por Wi-Fi. No usar emuladores Android. |
 
-Implementar únicamente el diseño autorizado por el responsable: layout principal, fondo radial, menú inferior flotante con HugeIcons, contenedor y botones de vidrio reutilizables, cabecera, saludo y cinco accesos visuales de Inicio, icono oficial de Android y vistas provisionales para Inicio, Mesas, Marketplace, Mensajes y Mi Perfil. `/` abre Inicio con la ciudad provisional «La Paz», búsqueda y notificaciones, «Hola, Enrique» y las tarjetas Crear mesa, Ver mapa, Mi ludoteca, Mis amigos y Marketplace. El nombre se recibe mediante un parámetro para mostrar el nombre visible de la cuenta cuando exista sesión. Las acciones de cabecera y tarjetas, el contenido de producto y la sesión siguen pendientes. Mis amigos no autoriza implementar relaciones de amistad. Las otras cuatro rutas muestran únicamente su título y el layout de autenticación queda pendiente. No adelantar contenido de pantallas, otros componentes, estilos, temas ni animaciones de producto.
+Implementar únicamente el alcance autorizado: layout principal y sus componentes aprobados, cinco vistas provisionales e icono Android; además, un layout de autenticación separado y formularios básicos de Crear cuenta e Iniciar sesión, conectados a la API y sin diseño definitivo. Crear cuenta pide solo nombre, correo y contraseña de 12–128 caracteres. Mi Perfil añade un cierre de sesión básico. Inicio recibe el nombre visible real de la cuenta; «La Paz» sigue siendo provisional. Las acciones de cabecera y tarjetas y el contenido de producto siguen pendientes. Mis amigos no autoriza relaciones de amistad. No añadir diseños, temas globales ni animaciones de producto; el tema Material básico se limita al layout auth.
 
-Todavía no se han elegido paquetes de estado ni integraciones. No introducir otro gestor de paquetes o framework sin actualizar la decisión y la documentación. Mantener el nombre MeepleWorld y la interfaz en español, con lanzamiento inicial en México e importes en MXN. Los pagos y las entregas se acuerdan entre usuarios.
+Autenticación usa `ChangeNotifier`/`ListenableBuilder` de Flutter para MVVM e inyección por constructores; no incorpora un gestor de estado externo. `http` 1.6.0 aporta el transporte y `flutter_secure_storage` 11.2.0 el almacenamiento seguro; `flutter_localizations` del SDK localiza los controles a `es_MX`. No introducir otro gestor de paquetes o framework sin actualizar la decisión. Mantener MeepleWorld y la interfaz en español, con México y MXN. Los pagos se acuerdan entre usuarios.
 
 ## Arquitectura, organización y nombres
 
@@ -48,12 +48,15 @@ frontend/
 │   │   │   └── app_routes.dart
 │   │   └── shell/
 │   │       ├── main_shell.dart
+│   │       ├── auth_shell.dart
 │   │       ├── navigation/
 │   │       │   └── main_section.dart
 │   │       └── widgets/
 │   │           ├── main_background.dart
 │   │           └── main_bottom_navigation_bar.dart
 │   ├── core/
+│   │   ├── network/            # configuración, cliente HTTP y errores
+│   │   ├── storage/            # renovación en almacenamiento seguro
 │   │   └── ui/
 │   │       ├── styles/
 │   │       │   └── app_colors.dart
@@ -62,6 +65,15 @@ frontend/
 │   │           ├── glass_container.dart
 │   │           └── section_placeholder.dart
 │   └── features/
+│       ├── auth/
+│       │   ├── data/
+│       │   │   ├── models/
+│       │   │   ├── repositories/
+│       │   │   └── services/
+│       │   └── presentation/
+│       │       ├── screens/
+│       │       ├── view_models/
+│       │       └── widgets/
 │       ├── home/
 │       │   └── presentation/
 │       │       ├── screens/
@@ -84,7 +96,7 @@ frontend/
 └── ios/
 ```
 
-Este árbol describe la organización implementada de los componentes existentes; las carpetas de pruebas se incorporarán cuando haya una suite. Crear únicamente directorios con código real. Las futuras funcionalidades, como autenticación o notificaciones, tendrán su propio módulo cuando se implemente su diseño; una funcionalidad puede incluir varias pantallas.
+Este árbol describe la organización implementada de los componentes existentes; las carpetas de pruebas se incorporarán cuando haya una suite. Crear únicamente directorios con código real. Las futuras funcionalidades, como notificaciones, tendrán su propio módulo cuando se implemente su diseño; una funcionalidad puede incluir varias pantallas.
 
 Los proyectos nativos permanecen dentro del frontend. Android e iOS están generados; su compilación y ejecución requieren las herramientas de cada plataforma. El identificador de aplicación de desarrollo es `com.meepleworld.app`; firma y publicación en tiendas están pendientes. Los modelos Dart se basarán en contratos independientes del ORM y del código del servidor; las dependencias y los recursos permanecerán en `frontend/`.
 
@@ -96,7 +108,7 @@ Los proyectos nativos permanecen dentro del frontend. Android e iOS están gener
 | `app/` | Widget raíz, router, composición de dependencias, ciclo de vida global y shell de navegación. |
 | `app/shell/` | Estructura común de las rutas: zonas seguras, fondo, menú inferior y selección de sección. |
 | `core/ui/` | Componentes visuales compartidos y sus estilos autorizados, independientes de una funcionalidad. |
-| `core/network/`, `core/storage/` | Infraestructura transversal de HTTP y almacenamiento cuando esas integraciones existan. Los servicios con endpoints de una funcionalidad pertenecen a esa funcionalidad. |
+| `core/network/`, `core/storage/` | Infraestructura transversal de HTTP y almacenamiento seguro ya utilizada por auth. Los servicios con endpoints de una funcionalidad pertenecen a esa funcionalidad. |
 | `features/<feature>/presentation/screens/` | Widgets raíz que abre el router; componen la pantalla y conectan sus eventos. |
 | `features/<feature>/presentation/widgets/` | Componentes propios de la funcionalidad, como `HomeHeader`; reciben datos y callbacks. |
 | `features/<feature>/presentation/view_models/` | Estado de pantalla, coordinación de acciones y transformación de datos para la interfaz cuando exista ese comportamiento. |
@@ -114,7 +126,7 @@ Reglas de dependencia:
 - Una pieza se incorpora a `core` por su responsabilidad transversal o reutilización real. `HomeHeader` pertenece a Inicio; `GlassButton` y `GlassContainer` pertenecen a la interfaz compartida.
 - Los casos de uso son opcionales. Una pantalla puramente visual, como las actuales, puede componerse con widgets y callbacks sin crear modelos de vista, repositorios ni estados vacíos.
 
-Cuando se implemente acceso a datos, utilizar `data/models/` para modelos inmutables de la aplicación, `data/repositories/` para contratos e implementaciones y `data/services/` para adaptadores de API o plataforma. Incorporar `data/dtos/` cuando el formato externo necesite su propio modelo y conversión. Los modelos de vista reciben modelos de aplicación; el JSON y los DTO quedan dentro de los adaptadores de datos. Los casos de uso acceden a contratos de repositorio, sin depender de widgets ni de servicios concretos. Estas capas son previstas; hoy el cliente no consume la API.
+El acceso a datos usa `data/models/` para modelos inmutables, `data/repositories/` para contratos e implementaciones y `data/services/` para adaptadores de API. Incorporar DTO separados solo cuando el formato lo justifique; en autenticación, `AuthApiService` traduce JSON a `AuthUser`, `AuthSession` y `RegistrationResult`. Los modelos de vista reciben modelos de aplicación; los casos de uso seguirán siendo opcionales. Esta separación ya existe para auth; las demás funcionalidades aún no consumen la API.
 
 ### Convenciones de nombres y archivos
 
@@ -146,9 +158,9 @@ Usar inglés para nombres de código y carpetas, conservando español en la inte
 
 ### Estado actual y mantenimiento
 
-La organización por funcionalidades está implementada para los 20 archivos Dart actuales. `app` compone el router y `MainShell`; `core/ui/widgets/` contiene las piezas compartidas; las cinco funcionalidades tienen sus pantallas y la cabecera y tarjetas de Inicio pertenecen a los widgets de `home`. Las anteriores carpetas globales fueron retiradas.
+La organización incluye `features/auth` con modelos, servicio API, contrato/repositorio y modelos de vista; `app` compone el cliente HTTP, almacenamiento, sesión y router. `core/network` y `core/storage` reúnen infraestructura transversal. Las cinco funcionalidades visuales conservan sus pantallas y widgets.
 
-La presentación actual sigue siendo visual y provisional. Los modelos de vista, estados, repositorios, servicios, casos de uso y suite de pruebas se incorporarán cuando exista comportamiento que los necesite; todavía no hay integración con la API ni gestor de estado elegido.
+La presentación de producto sigue provisional. Auth implementa comportamiento mediante MVVM y formularios Material básicos. No hay casos de uso ni suite de frontend: el responsable hará la comprobación manual de esta entrega.
 
 Todo cambio de organización deberá actualizar archivos, clases, imports, router y documentación en el mismo cambio, conservando las decisiones de diseño y comportamiento. Revisar formato, análisis, compilación y navegación móvil según las comprobaciones del proyecto. Los nuevos componentes seguirán las responsabilidades y convenciones de este apartado.
 
@@ -158,7 +170,7 @@ Las cinco tarjetas de Inicio tienen autorizado un efecto de presión con escala 
 
 El color predeterminado de todos los textos e iconos de MeepleWorld es `#343136`. `AppColors.foreground`, en `lib/core/ui/styles/app_colors.dart`, centraliza el valor; `MeepleWorldApp` lo aplica mediante `WidgetsApp.router.textStyle` e `IconTheme`. Los textos, los iconos estándar de Flutter y HugeIcons heredan este color. No introducir colores particulares sin una excepción del diseño; Crear mesa conserva su texto e icono blancos, y el SVG original de ubicación conserva su degradado especificado. El saludo, los títulos provisionales y el menú inferior utilizan ahora el color común.
 
-El frontend `frontend/` arranca con el nombre MeepleWorld y `WidgetsApp.router`. `lib/app/router/app_router.dart` configura `go_router`: `/` (Inicio), `/mesas`, `/marketplace`, `/mensajes` y `/mi-perfil` pertenecen a una `ShellRoute` cuyo layout es `MainShell`. Las rutas y sus nombres se definen en `lib/app/router/app_routes.dart`; cada una abre su pantalla de `lib/features/<feature>/presentation/screens/` mediante `NoTransitionPage`. Inicio muestra su cabecera, saludo y accesos visuales; las demás pantallas mantienen su título identificador. El router se conserva durante la vida de la app y se libera al desmontarla. El layout de autenticación se añadirá en otro grupo de rutas. No contiene contenido de producto, estado de negocio, servicios HTTP, temas personalizados ni integraciones.
+El frontend arranca con `WidgetsApp.router`, el color global heredado y localización `es_MX`. `go_router` mantiene dos `ShellRoute`: `MainShell` para `/`, `/mesas`, `/marketplace`, `/mensajes` y `/mi-perfil`; `AuthShell` para `/auth/iniciar-sesion`, `/auth/crear-cuenta` y `/auth/sesion`. Las vistas principales solo se abren con sesión comprobada; al arrancar se intenta restaurar la renovación y, sin sesión, se abre Iniciar sesión. `AuthShell` usa fondo blanco, zonas seguras, scroll para teclado y ancho máximo de 480, sin menú principal. Los controles estándar y el tema local conservan `AppColors.foreground`; no representan el diseño definitivo. El router, el cliente HTTP, la sesión y los temporizadores se liberan al desmontar la app.
 
 `MainShell`, en `lib/app/shell/main_shell.dart`, configura las barras del sistema con iconos oscuros, reserva las zonas seguras y deja espacio para el menú inferior fijo. `MainBackground` ocupa toda la superficie con un `RadialGradient`: `#DFC6FE` en 0% y `#F3E6EF` en 100%, opacos. Su centro está en la esquina superior derecha; una transformación orienta el eje mayor hacia la inferior izquierda y deja el menor a la mitad del mayor, aproximando la referencia recibida. La geometría se recalcula con los límites de la superficie.
 
@@ -168,7 +180,7 @@ El frontend `frontend/` arranca con el nombre MeepleWorld y `WidgetsApp.router`.
 
 `HomeHeader`, en `lib/features/home/presentation/widgets/home_header.dart`, aparece únicamente en Inicio, con márgenes laterales de 24 y superior de 16 dentro de la zona segura. Muestra una cápsula con «La Paz» con el archivo Jeko Semi Bold a 18, y el SVG original `assets/custom/location_filled.svg` a 18, conservando su degradado. A la derecha hay dos botones circulares de 56 con `strokeRoundedSearch01` y `strokeRoundedNotification01`, a 24 y trazo 1.7. El texto y los HugeIcons usan `#343136`; el texto de ciudad se adapta al ancho con elipsis. El SVG se registra en `pubspec.yaml` y se carga con `flutter_svg` 2.3.0, ahora dependencia directa (ya era transitiva de HugeIcons). «La Paz» es un dato visual provisional: no se obtiene del dispositivo ni de la API. Los tres botones aún no tienen acciones; no añadir búsquedas, selección de ciudad, permisos ni notificaciones sin su correspondiente diseño. La cabecera, el saludo, los accesos visuales y las cinco vistas provisionales están autorizados; el contenido de producto y los demás diseños siguen pendientes.
 
-`HomeScreen` reemplaza el título provisional de Inicio por «Hola, Enrique», con `userName` como parámetro provisional, Jeko Semi Bold a 28 y semántica de encabezado. La pantalla usa `SingleChildScrollView`, conserva la cabecera y deja el menú fijo en el shell. `HomeQuickActions`, en `lib/features/home/presentation/widgets/home_quick_actions.dart`, dispone dos columnas con separación de 12 y márgenes laterales de 32: Crear mesa ocupa las dos primeras filas a la izquierda, Ver mapa y Mi ludoteca quedan a la derecha, y Mis amigos y Marketplace comparten la última fila. Las alturas crecen con el ancho y con la medición de las etiquetas para respetar el tamaño de texto del sistema.
+`HomeScreen` muestra el nombre visible de la sesión recibido mediante `userName`, con Jeko Semi Bold a 28 y semántica de encabezado. Usa `SingleChildScrollView`, conserva la cabecera y deja fijo el menú. `HomeQuickActions` mantiene las dos columnas con separación de 12 y márgenes laterales de 32; Crear mesa ocupa dos filas y los otros cuatro accesos conservan sus posiciones y adaptación al texto.
 
 `HomeQuickActionCard`, junto al grid, reutiliza radio de 28, padding de 9 (antes 16), etiquetas Jeko Regular a 18 con peso explícito `FontWeight.w400` e iconos a 24 con trazo 1.7, dentro de círculos de 48 con blanco al 20%. Usa `strokeRoundedMapsLocation02`, `strokeRoundedDice`, `strokeRoundedAiCoEditing` y `strokeRoundedStore01`, con fondos `#EEB85F`, `#8FB2EC`, `#EC8DBD` y `#9590ED`. Crear mesa usa `strokeRoundedPlus`, texto Jeko Regular blanco a 22 con peso 400 y `assets/images/create_table_background.jpg` con `BoxFit.cover` y degradado morado transparente arriba y opaco abajo. La fotografía fue recreada con ImageGen desde la referencia entregada en 1024 × 1536 (2:3); su [procedencia y prompt](../../frontend/assets/images/README.md) se conservan junto al recurso registrado en `pubspec.yaml`. Las cinco tarjetas reciben callbacks opcionales, no tienen acciones conectadas y se anuncian como botones deshabilitados sin atenuar el diseño. No añadir rutas, mapa, biblioteca, publicación ni amistades a partir de estos accesos visuales.
 
@@ -180,9 +192,9 @@ Las cinco tarjetas usan el alias `JekoRegular`, registrado únicamente con `Jeko
 
 El backend inicial está implementado en `backend/` con autenticación y recuperación de acceso, perfiles, catálogo/biblioteca, descubrimiento y publicación de mesas, participaciones, ubicación privada y anuncios. El contrato REST se mantiene en [openapi.yaml](../../backend/openapi.yaml). Las cuentas ya reciben un `username` único automático; la API lo entrega en el registro, las sesiones y los perfiles, permite editarlo con `PATCH /users/me` y consultar un perfil exacto con `GET /users/username/:username` (sesión y correo verificado). Al implementar Editar cuenta, mostrarlo separado del nombre visible, aceptar 3–32 letras ASCII/números/guion bajo y presentar el conflicto `409`/`USERNAME_TAKEN` conservando lo escrito. El formulario, la búsqueda y los enlaces compartidos móviles aún no están diseñados ni implementados; el saludo seguirá usando el nombre visible y las relaciones seguirán usando el UUID. El chat, Socket.IO, BGG, amistades, notificaciones, reputación, moderación y mapa siguen pendientes porque no hay contratos implementados para esas funciones.
 
-La regla de producto exige cuenta activa, correo verificado y sesión válida para entrar a cualquier vista de contenido, incluidas las consultas de mesas, anuncios, catálogo y perfiles. El contenido denominado público solo es visible para usuarios autenticados. La apertura actual de las cinco rutas sin sesión es una presentación provisional autorizada del layout, Inicio con cabecera, saludo y accesos, y las otras cuatro vistas con título; no representa autenticación ni consume contenido de la API. El layout de acceso y los controles de sesión siguen pendientes. Antes de incorporar mesas, anuncios, catálogo, biblioteca, mapa o perfiles, comprobar o restaurar la sesión, también desde enlaces. Sin sesión mostrar únicamente los flujos de registro, acceso, verificación y recuperación. Si la renovación falla por expiración o revocación, volver al flujo de acceso y retirar el estado local de la cuenta y el contenido protegido.
+La regla exige cuenta activa, correo verificado y sesión válida antes de acceder a contenido. El router ya separa auth del layout principal; aún no hay consultas de contenido de producto y la protección de todas las lecturas del backend está pendiente. Si la renovación es inválida, retirar la credencial y el usuario locales y volver a Iniciar sesión. Si hay un error de conexión, ocultar el layout principal y permitir reintentar, conservando la renovación segura. Los enlaces a rutas de producto también pasan por el control de sesión; los enlaces específicos de verificación/recuperación siguen pendientes.
 
-Al comenzar la implementación móvil, separar presentación, estado y acceso a servicios; elegir entonces las dependencias necesarias. Consumir los contratos de la API mediante modelos Dart independientes del ORM. La autenticación móvil y el almacenamiento seguro de credenciales siguen pendientes.
+Conservar la separación de presentación, modelos de vista y acceso a servicios ya utilizada en auth. Consumir contratos mediante modelos Dart independientes del ORM. No trasladar JSON, credenciales ni HTTP a los métodos `build`.
 
 Al implementar conexiones y notificaciones, considerar el ciclo de vida móvil: detener listeners al salir, eliminar suscripciones al cerrar sesión y recuperar datos autorizados al reconectar o volver del segundo plano. El transporte en vivo complementará el historial del servidor.
 
@@ -196,15 +208,15 @@ La primera versión no tendrá escritura offline ni promesas de sincronización 
 
 ## Sesiones, integraciones y configuración pendientes
 
-En móviles, guardar la renovación mediante un adaptador de almacenamiento seguro basado en Keychain/Keystore; no usar preferencias sin cifrar para secretos. Elegir y verificar un paquete Flutter compatible antes de implementar ese adaptador y ajustar el transporte del backend cuando corresponda. Mantener el acceso en memoria y eliminar credenciales al cerrar sesión.
+La renovación se guarda con `RefreshTokenStorage` y `flutter_secure_storage` 11.2.0, con cifrado protegido por Keystore en Android y Keychain `unlocked_this_device` en iOS; la clave incluye la URL de API para separar servidores. El acceso permanece en memoria. No almacenar contraseñas ni secretos en preferencias sin cifrar; no registrar tokens. El repositorio persiste cada renovación antes de abrir la sesión; si falla el almacenamiento, intenta revocar la sesión emitida y muestra un error.
 
-La API actual entrega la renovación mediante cookie HttpOnly; la adaptación del transporte al cliente móvil debe acordarse con el backend. El cliente se guía por la respuesta de registro y no elige ni envía el entorno o el estado de verificación. En producción el correo requiere confirmación; en desarrollo y pruebas el backend deberá verificarlo al crear la cuenta, sin token ni envío de verificación. Esa adaptación sigue pendiente. El registro no crea una sesión: después se debe iniciar sesión. La recuperación conserva su flujo de correo en ambos casos.
+Login y refresh devuelven acceso, renovación y sus duraciones en JSON; refresh exige `{ refreshToken }`, sin cookies ni CORS. `AuthSessionViewModel` coordina una sola restauración/renovación, programa la próxima antes del vencimiento y comprueba la sesión al volver del segundo plano. Cerrar sesión exige bearer; si expiró, renovar primero. El cierre elimina la credencial local incluso ante un fallo remoto e informa si no se pudo confirmar la revocación; un fallo del almacenamiento no se presenta como cierre completado. El registro no inicia sesión y la respuesta determina si puede entrar directamente o debe verificar el correo. Desarrollo/test verifican las cuentas nuevas automáticamente; producción conserva confirmación y requiere proveedor real. Las pantallas de verificación y recuperación no se incorporaron.
 
 BGG se consume exclusivamente desde el backend y su token nunca llega a la app. La importación usa la colección pública de juegos poseídos del usuario indicado; no pedir su contraseña BGG ni presentarla como inicio de sesión o prueba de titularidad. Mostrar el logotipo legible **Powered by BGG** enlazado a BGG cuando se presenten sus datos, conforme a su [guía de uso](https://boardgamegeek.com/using_the_xml_api). La aprobación y las credenciales de BGG están pendientes; mantener disponible el registro manual si la integración no está configurada o falla.
 
 Al integrar push, permitir denegar su permiso sin impedir el uso de la app ni retirar los avisos internos. Las vistas previas serán genéricas, sin direcciones ni mensajes privados; abrir un aviso exige comprobar el permiso vigente. Cerrar sesión elimina suscripciones y desvincula el dispositivo de la cuenta. Un fallo de push no deshace una operación confirmada. Los proveedores de producción están pendientes; identificar los adaptadores de desarrollo y pruebas como simulados, sin afirmar que entregaron un mensaje real.
 
-El frontend no tiene configuración de API ni archivos de entorno. Los nombres del cliente se definirán al implementar sus servicios; cualquier valor incluido en la aplicación debe considerarse extraíble y no contener secretos. Las URLs usadas en dispositivos físicos deberán alcanzar el equipo de desarrollo; `localhost` dentro del dispositivo no apunta al backend del equipo.
+La URL se configura mediante `--dart-define=API_BASE_URL=http://<ip-del-equipo>:3000/api/v1`, sin archivos de secretos del frontend. El valor por defecto es `http://127.0.0.1:3000/api/v1`; para Android físico requiere una redirección ADB explícita o una IP alcanzable. `ApiConfig` exige HTTPS fuera de debug y rechaza credenciales, query y fragmento en la URL. HTTP local solo se habilita en debug: Android mediante su manifest y iOS con `Info-Debug.plist` y descripción del permiso de red local; release/profile conservan ATS. Android declara INTERNET para todos los modos y desactiva backups de credenciales; las tres configuraciones Runner de iOS usan `Runner.entitlements` para Keychain. Cualquier valor compilado es extraíble: no incluir secretos. Ver [configuración y recorrido manual](../../frontend/README.md#autenticación-y-api).
 
 Nunca versionar `.env`, credenciales push, certificados, llaves de firma móvil, contraseñas o tokens. Evitar copiar secretos de backend a Dart, recursos nativos o parámetros de compilación del cliente. La entrega de imágenes de la comunidad requerirá autorización y los recursos privados exigirán además permiso específico; no usar URLs permanentes de acceso anónimo para contenido de MeepleWorld.
 
@@ -250,4 +262,4 @@ Los siguientes escenarios corresponden a funcionalidades futuras y no acreditan 
 - Privacidad: retirar dirección exacta e instrucciones privadas del estado local cuando cambie la participación o se revoque el permiso; no mostrar datos no autorizados en mapas ni notificaciones.
 - Biblioteca: importación repetida y fallida, conservación de juegos manuales y presentación de indisponibilidad de BGG usando respuestas controladas.
 
-Registrar por separado APK compilado, ejecución en dispositivo físico Android (USB o Wi-Fi) y verificación iOS. No afirmar que iOS fue verificado si falta Xcode ni que push funciona sin haber integrado y probado su entrega. El frontend no consume ningún endpoint; las funcionalidades REST existentes siguen en el backend.
+Registrar por separado análisis estático, APK compilado, ejecución Android y verificación iOS. Para la entrega de autenticación del 6 de octubre, no crear ni ejecutar pruebas de frontend, compilar ni instalar la app: el responsable comprobará los recorridos manualmente. Auth consume registro, login, refresh y logout; el resto de la API sigue sin integración móvil. No afirmar que iOS, correo real ni push funcionan sin comprobarlos.

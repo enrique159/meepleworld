@@ -1,6 +1,6 @@
 # MeepleWorld: índice de instrucciones técnicas
 
-Las reglas técnicas y definiciones antes reunidas en este archivo y en `AGENTS.md` se organizan por proyecto. Última actualización documental: 4 de octubre de 2026.
+Las reglas técnicas y definiciones antes reunidas en este archivo y en `AGENTS.md` se organizan por proyecto. Última actualización documental: 6 de octubre de 2026.
 
 | Archivo | Contenido y ámbito |
 | --- | --- |
