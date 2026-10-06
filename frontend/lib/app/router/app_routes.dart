@@ -1,4 +1,5 @@
 abstract final class AppRoutes {
+  static const authHome = '/auth';
   static const signIn = '/auth/iniciar-sesion';
   static const signUp = '/auth/crear-cuenta';
   static const session = '/auth/sesion';

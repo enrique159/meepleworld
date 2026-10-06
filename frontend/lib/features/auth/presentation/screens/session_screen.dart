@@ -13,8 +13,6 @@ class SessionScreen extends StatelessWidget {
     builder: (context, _) => Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Semantics(header: true, child: const Text('MeepleWorld')),
-        const SizedBox(height: 24),
         if (session.busy) ...[
           const Center(child: CircularProgressIndicator()),
           const SizedBox(height: 16),

@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:meepleworld/features/auth/data/models/registration_result.dart';
 import 'package:meepleworld/features/auth/data/repositories/auth_repository.dart';
+import 'package:meepleworld/features/auth/presentation/screens/auth_home_screen.dart';
 import 'package:meepleworld/features/auth/presentation/screens/session_screen.dart';
 import 'package:meepleworld/features/auth/presentation/screens/sign_in_screen.dart';
 import 'package:meepleworld/features/auth/presentation/screens/sign_up_screen.dart';
@@ -28,12 +29,12 @@ GoRouter createAppRouter({
     refreshListenable: session,
     redirect: (context, state) {
       final path = state.uri.path;
-      final isAuth = path.startsWith('/auth/');
+      final isAuth = path == AppRoutes.authHome || path.startsWith('/auth/');
       if (!session.initialized) {
         return path == AppRoutes.session ? null : AppRoutes.session;
       }
       if (!session.isAuthenticated) {
-        return isAuth && path != AppRoutes.session ? null : AppRoutes.signIn;
+        return isAuth && path != AppRoutes.session ? null : AppRoutes.authHome;
       }
       return isAuth ? AppRoutes.home : null;
     },
@@ -41,9 +42,16 @@ GoRouter createAppRouter({
       ShellRoute(
         pageBuilder: (context, state, child) => NoTransitionPage<void>(
           key: state.pageKey,
-          child: AuthShell(child: child),
+          child: AuthShell(
+            alignContentToBottom: state.uri.path == AppRoutes.authHome,
+            child: child,
+          ),
         ),
         routes: [
+          GoRoute(
+            path: AppRoutes.authHome,
+            builder: (context, state) => const AuthHomeScreen(),
+          ),
           GoRoute(
             path: AppRoutes.session,
             builder: (context, state) => SessionScreen(session: session),

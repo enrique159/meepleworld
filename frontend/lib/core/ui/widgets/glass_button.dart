@@ -8,6 +8,7 @@ class GlassButton extends StatelessWidget {
     required this.semanticLabel,
     required this.child,
     this.onPressed,
+    this.height = 56,
     this.padding = const EdgeInsets.symmetric(horizontal: 20),
     super.key,
   });
@@ -15,6 +16,7 @@ class GlassButton extends StatelessWidget {
   final String semanticLabel;
   final Widget child;
   final VoidCallback? onPressed;
+  final double height;
   final EdgeInsetsGeometry padding;
 
   @override
@@ -33,7 +35,7 @@ class GlassButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(999),
           padding: padding,
           child: SizedBox(
-            height: 56,
+            height: height,
             child: Center(widthFactor: 1, child: child),
           ),
         ),

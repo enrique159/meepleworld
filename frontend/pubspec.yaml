@@ -23,6 +23,7 @@ dev_dependencies:
 flutter:
   assets:
     - assets/custom/location_filled.svg
+    - assets/custom/meepleworld_logo.svg
     - assets/images/create_table_background.jpg
   fonts:
     - family: JekoRegular

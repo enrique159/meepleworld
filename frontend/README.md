@@ -42,16 +42,17 @@ Las capas de estado y datos existen en `features/auth`. Los demás módulos sigu
 | Mensajes | `/mensajes` | `messages` |
 | Mi Perfil | `/mi-perfil` | `profile` |
 
-Las cinco vistas principales comparten fondo y menú; Inicio conserva los componentes visuales aprobados y las otras cuatro el título provisional. Mi Perfil añade Cerrar sesión. Auth utiliza una `ShellRoute` independiente con fondo blanco, zonas seguras, scroll y ancho máximo de 480, sin menú principal. Sus formularios estándar usan el color global y todavía no tienen diseño definitivo.
+Las cinco vistas principales comparten fondo y menú; Inicio conserva los componentes visuales aprobados y las otras cuatro el título provisional. Mi Perfil añade Cerrar sesión. Auth utiliza una `ShellRoute` independiente con zonas seguras, scroll y ancho máximo de 480, sin menú principal. Su fondo cubre toda la pantalla con un `LinearGradient` diagonal de `#EA90BB` arriba a la izquierda a `#9090EA` abajo a la derecha; las barras del sistema son transparentes y usan iconos blancos. El encabezado compartido muestra el logo SVG blanco, «MeepleWorld» y «Encuentra grupos de amigos con quién jugar» antes del contenido; el logo se conserva en `assets/custom/meepleworld_logo.svg`. La pantalla inicial presenta «Crea tu cuenta» con degradado horizontal `#9D40E1` → `#5F4BD1` y «Ya tengo una cuenta» con el estilo `GlassButton` de Inicio; ambos botones quedan al fondo de la vista. Cada acción abre su formulario independiente; los formularios estándar usan el color global y todavía no tienen diseño definitivo.
 
-`lib/app/shell/main_shell.dart` reserva las zonas seguras y el espacio del menú para el contenido, y configura iconos oscuros en las barras del sistema. `lib/app/shell/widgets/main_background.dart` dibuja el fondo con un `RadialGradient` de Flutter, sin imágenes: `#DFC6FE` en 0% y `#F3E6EF` en 100%, ambos totalmente opacos. El centro está en la esquina superior derecha; el eje mayor llega a la inferior izquierda y el eje menor mide la mitad. Esa proporción aproxima la elipse de la referencia recibida y se adapta al tamaño y orientación de la pantalla. El fondo ocupa toda la superficie, incluidas las zonas detrás de las barras del sistema.
+`lib/app/shell/main_shell.dart` reserva las zonas seguras y el espacio del menú para el contenido, y configura iconos oscuros en las barras del sistema. `lib/app/shell/widgets/main_background.dart` dibuja el fondo con un `RadialGradient` de Flutter, sin imágenes: `#DFC6FE` en 0% y `#F3E6EF` en 100%, ambos totalmente opacos. El centro está en la esquina superior derecha; el eje mayor llega a la inferior izquierda y el eje menor mide la mitad. Esa proporción aproxima la elipse de la referencia recibida y se adapta al tamaño y orientación de la pantalla. El fondo ocupa toda la superficie, incluidas las zonas detrás de las barras del sistema. `AuthShell` aplica el mismo enfoque de fondo nativo de Flutter, con un `LinearGradient` que sigue la diagonal de la referencia de autenticación.
 
-Al arrancar o abrir una ruta, se comprueba/restaura la sesión antes de acceder al layout principal. Sin sesión se abre Iniciar sesión; registrarse no crea una sesión automáticamente. Una renovación inválida limpia credenciales y usuario; un fallo de conexión muestra Reintentar y conserva la renovación segura. El backend todavía tiene lecturas anónimas pendientes de proteger, aunque la navegación móvil ya exige sesión.
+Al arrancar o abrir una ruta, se comprueba/restaura la sesión antes de acceder al layout principal. Sin sesión se abre la pantalla inicial `/auth`, donde Crear cuenta aparece primero e Iniciar sesión abre la ruta `/auth/iniciar-sesion`; registrarse no crea una sesión automáticamente. Una renovación inválida limpia credenciales y usuario; un fallo de conexión muestra Reintentar y conserva la renovación segura. El backend todavía tiene lecturas anónimas pendientes de proteger, aunque la navegación móvil ya exige sesión.
 
 ## Autenticación y API
 
 | Vista | Ruta |
 | --- | --- |
+| Inicio de autenticación | `/auth` |
 | Iniciar sesión | `/auth/iniciar-sesion` |
 | Crear cuenta | `/auth/crear-cuenta` |
 | Comprobar/restaurar sesión | `/auth/sesion` |
@@ -75,7 +76,7 @@ flutter run -d <id-del-dispositivo> --dart-define=API_BASE_URL=http://127.0.0.1:
 
 Arranca primero el backend con su configuración y migraciones aplicadas. `localhost` en el teléfono no apunta al equipo sin esa redirección. Cambiar un `dart-define` requiere volver a arrancar la app; hot reload no actualiza la URL. Fuera de debug, `API_BASE_URL` debe usar HTTPS. Android permite HTTP únicamente en su manifest debug y iOS mediante `Runner/Info-Debug.plist`; release/profile conservan ATS. El permiso de red local de iOS tiene una descripción de desarrollo. Las tres configuraciones Runner usan `Runner.entitlements` para Keychain y Android desactiva backup de datos locales. No incluir secretos en parámetros de compilación.
 
-Para comprobarlo manualmente: abre Crear cuenta desde Iniciar sesión, registra nombre/correo/contraseña, inicia sesión y comprueba el saludo; cierra y vuelve a abrir la app para revisar la restauración, y usa Cerrar sesión en Mi Perfil. Comprueba también correo duplicado, contraseña incorrecta y falta de conexión. Estos comandos y recorridos son instrucciones para el responsable; no se ejecutó el frontend en esta entrega. Las pantallas y enlaces de verificación y recuperación y el proveedor real de correo siguen pendientes.
+Para comprobarlo manualmente: abre la pantalla inicial de autenticación, prueba Crear cuenta y Ya tengo una cuenta, registra nombre/correo/contraseña, inicia sesión y comprueba el saludo; cierra y vuelve a abrir la app para revisar la restauración, y usa Cerrar sesión en Mi Perfil. Comprueba también correo duplicado, contraseña incorrecta y falta de conexión. Estos comandos y recorridos son instrucciones para el responsable; no se ejecutó el frontend en esta entrega. Las pantallas y enlaces de verificación y recuperación y el proveedor real de correo siguen pendientes.
 
 ## Menú flotante y contenedor de vidrio
 
@@ -92,7 +93,7 @@ La dependencia [`hugeicons`](https://pub.dev/packages/hugeicons), resuelta a 1.2
 - Borde de 1 píxel lógico con degradado lineal `#F1E7FC` en la esquina superior izquierda y `#DFC7FE` en la inferior derecha.
 - Parámetros `child`, `borderRadius` y `padding`; el menú usa radio de cápsula y padding de 6.
 
-El borde se pinta únicamente sobre el contorno, sin aplicar su degradado al interior. `lib/core/ui/widgets/glass_button.dart` reutiliza esta superficie para los botones de la cabecera, con forma de cápsula, altura de 56 y una etiqueta semántica. No se han incorporado animaciones.
+El borde se pinta únicamente sobre el contorno, sin aplicar su degradado al interior. `lib/core/ui/widgets/glass_button.dart` reutiliza esta superficie para los botones de la cabecera, con forma de cápsula, altura predeterminada de 56, altura ajustable para auth y etiqueta semántica. No se han incorporado animaciones.
 
 ## Cabecera de Inicio
 
