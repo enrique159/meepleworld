@@ -11,24 +11,28 @@ class GlassContainer extends StatelessWidget {
     this.borderRadius = const BorderRadius.all(Radius.circular(24)),
     this.padding = EdgeInsets.zero,
     this.borderStyle = GlassBorderStyle.lightBackground,
+    this.backgroundColor = const Color.fromRGBO(255, 255, 255, 0.3),
     super.key,
   });
 
   final Widget child;
   final BorderRadius borderRadius;
   final EdgeInsetsGeometry padding;
-  final GlassBorderStyle borderStyle;
+  final GlassBorderStyle? borderStyle;
+  final Color backgroundColor;
 
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
-      foregroundPainter: _GlassBorderPainter(borderRadius, borderStyle),
+      foregroundPainter: borderStyle == null
+          ? null
+          : _GlassBorderPainter(borderRadius, borderStyle!),
       child: ClipRRect(
         borderRadius: borderRadius,
         child: BackdropFilter(
           filter: ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: ColoredBox(
-            color: const Color.fromRGBO(255, 255, 255, 0.3),
+            color: backgroundColor,
             child: Padding(padding: padding, child: child),
           ),
         ),

@@ -4,6 +4,8 @@ import 'package:meepleworld/app/router/app_routes.dart';
 import 'package:meepleworld/core/ui/styles/glass_border_style.dart';
 import 'package:meepleworld/core/ui/widgets/glass_button.dart';
 
+import '../widgets/auth_primary_button.dart';
+
 class AuthHomeScreen extends StatelessWidget {
   const AuthHomeScreen({super.key});
 
@@ -12,9 +14,9 @@ class AuthHomeScreen extends StatelessWidget {
     mainAxisAlignment: MainAxisAlignment.end,
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      _GradientButton(
-        onPressed: () => context.go(AppRoutes.signUp),
-        child: const Text('Crea tu cuenta', style: _buttonTextStyle),
+      AuthPrimaryButton(
+        label: 'Crea tu cuenta',
+        onPressed: () => context.push(AppRoutes.signUp),
       ),
       const SizedBox(height: 18),
       SizedBox(
@@ -40,44 +42,5 @@ class AuthHomeScreen extends StatelessWidget {
     fontFamily: 'JekoSemiBold',
     fontSize: 18,
     height: 1.1,
-  );
-}
-
-class _GradientButton extends StatelessWidget {
-  const _GradientButton({required this.onPressed, required this.child});
-
-  final VoidCallback onPressed;
-  final Widget child;
-
-  static const _borderRadius = BorderRadius.all(Radius.circular(999));
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-    button: true,
-    enabled: true,
-    label: 'Crea tu cuenta',
-    onTap: onPressed,
-    excludeSemantics: true,
-    child: SizedBox(
-      height: 72,
-      child: Material(
-        color: Colors.transparent,
-        child: Ink(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-              colors: [Color(0xFF9D40E1), Color(0xFF5F4BD1)],
-            ),
-            borderRadius: _borderRadius,
-          ),
-          child: InkWell(
-            onTap: onPressed,
-            borderRadius: _borderRadius,
-            child: Center(child: child),
-          ),
-        ),
-      ),
-    ),
   );
 }

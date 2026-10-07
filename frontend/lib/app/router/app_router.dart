@@ -44,6 +44,7 @@ GoRouter createAppRouter({
           key: state.pageKey,
           child: AuthShell(
             alignContentToBottom: state.uri.path == AppRoutes.authHome,
+            formLayout: state.uri.path == AppRoutes.signUp,
             child: child,
           ),
         ),
