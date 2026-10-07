@@ -35,7 +35,7 @@ Con una sesión válida, `/` abre Inicio con el fondo radial aprobado (`#DFC6FE`
 
 El código Flutter está organizado por funcionalidades: `app` compone arranque, router y los dos layouts; `core` reúne componentes, cliente HTTP y almacenamiento seguro; `features/auth` implementa modelos, servicios, repositorio y modelos de vista para registro y sesiones. La arquitectura está documentada en las [reglas del frontend](.github/frontend/rules.md).
 
-Las fuentes Jeko entregadas para la identidad visual ya están registradas como recursos locales del frontend. Su uso está documentado en la [guía del frontend](frontend/README.md); los títulos provisionales usan Jeko, sin un tema global.
+Las 18 variantes de Jeko entregadas para la identidad visual están registradas como recursos locales del frontend, cada una con una familia independiente; se conserva también la familia general `Jeko`. Su uso está documentado en la [guía del frontend](frontend/README.md); los títulos provisionales usan Jeko, sin un tema global.
 
 Android ya utiliza el icono oficial de MeepleWorld: ilustración con su degradado original sobre blanco puro, capas adaptativas y versión monocromática para los colores personalizados del sistema en launchers compatibles. También están generados los PNG para versiones anteriores y el archivo para Google Play. Los originales y recursos se documentan en la [guía del icono](frontend/README.md#icono-oficial-de-android); el icono oficial de iOS y la publicación en tiendas siguen pendientes.
 

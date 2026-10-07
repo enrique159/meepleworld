@@ -23,7 +23,7 @@ class AuthBranding extends StatelessWidget {
           textAlign: TextAlign.center,
           style: TextStyle(
             color: Colors.white,
-            fontFamily: 'JekoSemiBold',
+            fontFamily: 'JekoBlack',
             fontSize: 28,
             height: 1.1,
           ),
@@ -34,8 +34,8 @@ class AuthBranding extends StatelessWidget {
         'Encuentra grupos de amigos\ncon quién jugar',
         textAlign: TextAlign.center,
         style: TextStyle(
-          color: Colors.white,
-          fontFamily: 'JekoRegular',
+          color: Color.fromRGBO(255, 255, 255, 0.7),
+          fontFamily: 'JekoSemiBold',
           fontSize: 16,
           height: 1.25,
         ),

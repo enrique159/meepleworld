@@ -19,6 +19,7 @@ import '../shell/auth_shell.dart';
 import '../shell/main_shell.dart';
 import '../shell/navigation/main_section.dart';
 import 'app_routes.dart';
+import 'auth_transition_page.dart';
 
 GoRouter createAppRouter({
   required AuthRepository auth,
@@ -40,38 +41,56 @@ GoRouter createAppRouter({
     },
     routes: [
       ShellRoute(
-        pageBuilder: (context, state, child) => NoTransitionPage<void>(
-          key: state.pageKey,
-          child: AuthShell(
-            alignContentToBottom: state.uri.path == AppRoutes.authHome,
-            formLayout: state.uri.path == AppRoutes.signUp,
-            child: child,
-          ),
-        ),
+        pageBuilder: (context, state, child) =>
+            NoTransitionPage<void>(key: state.pageKey, child: child),
         routes: [
           GoRoute(
             path: AppRoutes.authHome,
-            builder: (context, state) => const AuthHomeScreen(),
+            pageBuilder: (context, state) => AuthTransitionPage(
+              key: state.pageKey,
+              disableAnimations: MediaQuery.disableAnimationsOf(context),
+              child: const AuthShell(
+                alignContentToBottom: true,
+                child: AuthHomeScreen(),
+              ),
+            ),
           ),
           GoRoute(
             path: AppRoutes.session,
-            builder: (context, state) => SessionScreen(session: session),
+            pageBuilder: (context, state) => NoTransitionPage<void>(
+              key: state.pageKey,
+              child: AuthShell(child: SessionScreen(session: session)),
+            ),
           ),
           GoRoute(
             path: AppRoutes.signUp,
-            builder: (context, state) =>
-                SignUpScreen(createViewModel: () => SignUpViewModel(auth)),
+            pageBuilder: (context, state) => AuthTransitionPage(
+              key: state.pageKey,
+              disableAnimations: MediaQuery.disableAnimationsOf(context),
+              child: AuthShell(
+                formLayout: true,
+                child: SignUpScreen(
+                  createViewModel: () => SignUpViewModel(auth),
+                ),
+              ),
+            ),
           ),
           GoRoute(
             path: AppRoutes.signIn,
-            builder: (context, state) {
+            pageBuilder: (context, state) {
               final result = state.extra is RegistrationResult
                   ? state.extra as RegistrationResult
                   : null;
-              return SignInScreen(
-                createViewModel: () => SignInViewModel(session),
-                initialEmail: result?.email ?? '',
-                message: result?.message ?? session.signedOutMessage,
+              return AuthTransitionPage(
+                key: state.pageKey,
+                disableAnimations: MediaQuery.disableAnimationsOf(context),
+                child: AuthShell(
+                  child: SignInScreen(
+                    createViewModel: () => SignInViewModel(session),
+                    initialEmail: result?.email ?? '',
+                    message: result?.message ?? session.signedOutMessage,
+                  ),
+                ),
               );
             },
           ),

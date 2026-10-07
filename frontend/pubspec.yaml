@@ -26,14 +26,87 @@ flutter:
     - assets/custom/meepleworld_logo.svg
     - assets/images/create_table_background.jpg
   fonts:
+    - family: JekoThin
+      fonts:
+        - asset: assets/fonts/Jeko Thin.ttf
+          weight: 100
+    - family: JekoThinItalic
+      fonts:
+        - asset: assets/fonts/Jeko Thin Italic.ttf
+          weight: 100
+          style: italic
+    - family: JekoExtraLight
+      fonts:
+        - asset: assets/fonts/Jeko Extra Light.ttf
+          weight: 200
+    - family: JekoExtraLightItalic
+      fonts:
+        - asset: assets/fonts/Jeko Extra Light Italic.ttf
+          weight: 200
+          style: italic
+    - family: JekoLight
+      fonts:
+        - asset: assets/fonts/Jeko Light.ttf
+          weight: 300
+    - family: JekoLightItalic
+      fonts:
+        - asset: assets/fonts/Jeko Light Italic.ttf
+          weight: 300
+          style: italic
     - family: JekoRegular
       fonts:
         - asset: assets/fonts/Jeko Regular.ttf
           weight: 400
+    - family: JekoRegularItalic
+      fonts:
+        - asset: assets/fonts/Jeko Regular Italic.ttf
+          weight: 400
+          style: italic
+    - family: JekoMedium
+      fonts:
+        - asset: assets/fonts/Jeko Medium.ttf
+          weight: 500
+    - family: JekoMediumItalic
+      fonts:
+        - asset: assets/fonts/Jeko Medium Italic.ttf
+          weight: 500
+          style: italic
     - family: JekoSemiBold
       fonts:
         - asset: assets/fonts/Jeko Semi Bold.ttf
           weight: 600
+    - family: JekoSemiBoldItalic
+      fonts:
+        - asset: assets/fonts/Jeko Semi Bold Italic.ttf
+          weight: 600
+          style: italic
+    - family: JekoBold
+      fonts:
+        - asset: assets/fonts/Jeko Bold.ttf
+          weight: 700
+    - family: JekoBoldItalic
+      fonts:
+        - asset: assets/fonts/Jeko Bold Italic.ttf
+          weight: 700
+          style: italic
+    - family: JekoExtraBold
+      fonts:
+        - asset: assets/fonts/Jeko Extra Bold.ttf
+          weight: 800
+    - family: JekoExtraBoldItalic
+      fonts:
+        - asset: assets/fonts/Jeko Extra Bold Italic.ttf
+          weight: 800
+          style: italic
+    - family: JekoBlack
+      fonts:
+        - asset: assets/fonts/Jeko Black.ttf
+          weight: 900
+    - family: JekoBlackItalic
+      fonts:
+        - asset: assets/fonts/Jeko Black Italic.ttf
+          weight: 900
+          style: italic
     - family: Jeko
       fonts:
         - asset: assets/fonts/Jeko Thin.ttf

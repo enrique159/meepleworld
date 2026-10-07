@@ -23,7 +23,7 @@ class AuthHomeScreen extends StatelessWidget {
         width: double.infinity,
         child: GlassButton(
           semanticLabel: 'Ya tengo una cuenta. Iniciar sesión',
-          onPressed: () => context.go(AppRoutes.signIn),
+          onPressed: () => context.push(AppRoutes.signIn),
           height: 72,
           padding: EdgeInsets.zero,
           borderStyle: GlassBorderStyle.coloredBackground,

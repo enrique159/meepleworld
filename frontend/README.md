@@ -42,13 +42,19 @@ Las capas de estado y datos existen en `features/auth`. Los demás módulos sigu
 | Mensajes | `/mensajes` | `messages` |
 | Mi Perfil | `/mi-perfil` | `profile` |
 
-Las cinco vistas principales comparten fondo y menú; Inicio conserva los componentes visuales aprobados y las otras cuatro el título provisional. Mi Perfil añade Cerrar sesión. Auth utiliza una `ShellRoute` independiente con zonas seguras, scroll y ancho máximo de 480, sin menú principal. En bienvenida, inicio de sesión y comprobación de sesión, el fondo cubre toda la pantalla con un `LinearGradient` diagonal de `#EA90BB` arriba a la izquierda a `#9090EA` abajo a la derecha; las barras del sistema son transparentes y usan iconos blancos. El encabezado compartido muestra el logo SVG blanco, «MeepleWorld» y «Encuentra grupos de amigos con quién jugar» antes del contenido; el logo se conserva en `assets/custom/meepleworld_logo.svg`. La pantalla inicial presenta «Crea tu cuenta» con degradado horizontal `#9D40E1` → `#5F4BD1` y «Ya tengo una cuenta» con `GlassButton` y su variante de borde para fondos con color; ambos botones quedan al fondo de la vista. Cada acción abre una vista independiente. Crear cuenta usa la variante clara de `AuthShell`, con fondo radial `#DFC6FE` → `#F3E6EF`, iconos oscuros en las barras del sistema y sin el encabezado de bienvenida. Iniciar sesión conserva su formulario estándar.
+Las cinco vistas principales comparten fondo y menú; Inicio conserva los componentes visuales aprobados y las otras cuatro el título provisional. Mi Perfil añade Cerrar sesión. Auth utiliza una `ShellRoute` independiente con zonas seguras, scroll y ancho máximo de 480, sin menú principal. En bienvenida, inicio de sesión y comprobación de sesión, el fondo cubre toda la pantalla con un `LinearGradient` diagonal de `#EA90BB` arriba a la izquierda a `#9090EA` abajo a la derecha; las barras del sistema son transparentes y usan iconos blancos. El encabezado compartido muestra el logo SVG blanco, «MeepleWorld» y «Encuentra grupos de amigos con quién jugar» antes del contenido; el logo se conserva en `assets/custom/meepleworld_logo.svg`. La pantalla inicial presenta «Crea tu cuenta» con degradado horizontal `#9D40E1` → `#5F4BD1` y «Ya tengo una cuenta» con `GlassButton` y su variante de borde para fondos con color; ambos botones quedan al fondo de la vista. Cada acción abre una vista independiente mediante `context.push`, conservando el regreso. Crear cuenta usa la variante clara de `AuthShell`, con fondo radial `#DFC6FE` → `#F3E6EF`, iconos oscuros en las barras del sistema y sin el encabezado de bienvenida. Comparte el padding de la bienvenida: 24 píxeles lógicos a izquierda y derecha, 64 arriba y 24 abajo dentro de la zona segura. El regreso, título, descripción, campos y «Siguiente» se alinean al margen común. El ajuste pasó formato, análisis y compilación debug; la captura y la jerarquía de accesibilidad del Pixel 8a confirmaron la alineación con texto al 115%. iOS queda sin verificar para este ajuste. Iniciar sesión conserva su formulario estándar.
 
 `lib/app/shell/main_shell.dart` reserva las zonas seguras y el espacio del menú para el contenido, y configura iconos oscuros en las barras del sistema. `lib/app/shell/widgets/main_background.dart` dibuja el fondo con un `RadialGradient` de Flutter, sin imágenes: `#DFC6FE` en 0% y `#F3E6EF` en 100%, ambos totalmente opacos. El centro está en la esquina superior derecha; el eje mayor llega a la inferior izquierda y el eje menor mide la mitad. Esa proporción aproxima la elipse de la referencia recibida y se adapta al tamaño y orientación de la pantalla. El fondo ocupa toda la superficie, incluidas las zonas detrás de las barras del sistema. `AuthShell` conserva el `LinearGradient` en bienvenida, inicio de sesión y comprobación de sesión; Crear cuenta reutiliza `MainBackground` dentro del mismo layout de autenticación.
 
 Al arrancar o abrir una ruta, se comprueba/restaura la sesión antes de acceder al layout principal. Sin sesión se abre la pantalla inicial `/auth`, donde Crear cuenta aparece primero e Iniciar sesión abre la ruta `/auth/iniciar-sesion`; registrarse no crea una sesión automáticamente. Una renovación inválida limpia credenciales y usuario; un fallo de conexión muestra Reintentar y conserva la renovación segura. El backend todavía tiene lecturas anónimas pendientes de proteger, aunque la navegación móvil ya exige sesión.
 
 ## Autenticación y API
+
+Bienvenida, Crear cuenta e Iniciar sesión comparten una transición de 250 ms con deslizamiento horizontal suave y fundido, curva `easeInOutCubic`; al regresar se invierte el recorrido. `AuthTransitionPage` está en `lib/app/router/auth_transition_page.dart`, sin dependencias nuevas. Cada página incluye su `AuthShell` dentro de la transición para animar también fondo y encabezado. Si el sistema desactiva animaciones, se muestra el contenido directamente con duración cero. La comprobación de sesión y las cinco rutas del layout principal conservan la navegación sin transición.
+
+Los botones de bienvenida y Crear cuenta desde Iniciar sesión conservan la página anterior con `context.push`. Tras registrar, `context.go` sustituye el flujo por Iniciar sesión y retira las pantallas con contraseñas de la pila, como antes.
+
+Verificación de las transiciones del 7 de octubre de 2026: formato, `flutter analyze`, APK debug y enlaces locales correctos. La app se instaló y ejecutó en el Pixel 8a físico por Wi-Fi; una grabación confirmó el deslizamiento y fundido al abrir Crear cuenta e Iniciar sesión y al regresar. Se comprobó también Iniciar sesión → Crear cuenta → Atrás, conservando la vista anterior, y no se registraron errores de Flutter. La revisión confirmó la presentación final de Crear cuenta con texto al 115%. No se enviaron formularios ni se modificaron datos del backend. iOS y la desactivación de animaciones desde los ajustes del sistema quedan sin verificar en dispositivo.
 
 | Vista | Ruta |
 | --- | --- |
@@ -93,13 +99,15 @@ La dependencia [`hugeicons`](https://pub.dev/packages/hugeicons), resuelta a 1.2
 - Borde de 1 píxel lógico con degradado lineal desde la esquina superior izquierda a la inferior derecha. `GlassBorderStyle.lightBackground` usa `#F1E7FC` → `#DFC7FE` por defecto; `GlassBorderStyle.coloredBackground` usa `#F1E7FC` → `#7676C3` y se aplica a «Ya tengo una cuenta».
 - Parámetros `child`, `borderRadius`, `padding`, `borderStyle` y `backgroundColor`; `borderStyle: null` omite el borde sin alterar los valores predeterminados de los componentes existentes; el menú usa radio de cápsula y padding de 6. `GlassButton` también acepta `borderStyle` para reutilizar ambas variantes.
 
-El borde se pinta únicamente sobre el contorno, sin aplicar su degradado al interior. `lib/core/ui/widgets/glass_button.dart` reutiliza esta superficie para los botones de la cabecera, con forma de cápsula, altura predeterminada de 56, altura ajustable para auth y etiqueta semántica. No se han incorporado animaciones.
+El borde se pinta únicamente sobre el contorno, sin aplicar su degradado al interior. `lib/core/ui/widgets/glass_button.dart` reutiliza esta superficie para los botones de la cabecera, con forma de cápsula, altura predeterminada de 56, altura ajustable para auth y etiqueta semántica. El componente no incorpora animaciones propias; las páginas de autenticación animan su navegación.
 
 ## Campos de texto de vidrio
 
 `lib/core/ui/widgets/glass_text_input.dart` define `GlassTextInput`, reutilizable fuera de auth. Tiene forma de cápsula, altura mínima de 62 píxeles lógicos, fondo blanco al 50%, blur de sigma 8 en ambos ejes y ningún borde. Admite `prependIcon` y `appendIcon` opcionales; el primero hereda `#5F4BD1`, el segundo conserva el color global. El placeholder usa `#B6A1D1` y Jeko Regular a 16; el texto escrito hereda `#343136`. Las excepciones de color están centralizadas en `AppColors`.
 
-El componente admite controlador, validador, tipo de teclado, acciones, autofill y texto oculto; participa en `Form` y presenta errores accesibles debajo de la cápsula. Los placeholders pueden ocupar dos líneas y la altura crece con el tamaño de texto del sistema. Crear cuenta lo utiliza con HugeIcons de usuario, correo y contraseña, y botones accesibles para mostrar/ocultar. `AuthPrimaryButton` comparte el degradado y la altura mínima de 72 entre la bienvenida y «Siguiente». No se añadieron dependencias ni animaciones.
+El componente admite controlador, validador, tipo de teclado, acciones, autofill y texto oculto; participa en `Form` y presenta errores accesibles debajo de la cápsula. Los placeholders pueden ocupar dos líneas y la altura crece con el tamaño de texto del sistema. Crear cuenta lo utiliza con HugeIcons de usuario, correo y contraseña, y botones accesibles para mostrar/ocultar. `AuthPrimaryButton` comparte el degradado y la altura mínima de 72 entre la bienvenida y «Siguiente». No se añadieron dependencias; la navegación de autenticación aplica las transiciones descritas arriba.
+
+Verificación del 7 de octubre de 2026: formato, `flutter analyze`, compilación del APK debug y enlaces locales correctos. Se instaló y abrió en el Pixel 8a físico por Wi-Fi; la primera revisión visual y de accesibilidad confirmó los cuatro campos, colores, regreso y botón. El teléfono usa texto al 115%; se ajustaron los placeholders para admitir dos líneas y la descripción para ajustarse al ancho. La versión final compiló y pasó el análisis. En esa revisión quedaron pendientes la adaptación visual final, teclado y recorridos interactivos porque el teléfono quedó bloqueado; la adaptación visual y navegación se revisaron después al verificar las transiciones, mientras teclado y registro completo siguen pendientes; iOS y el registro completo contra la API no se verificaron. No se crearon cuentas ni se ejecutó una suite de pruebas.
 
 ## Cabecera de Inicio
 
@@ -136,40 +144,38 @@ Las cinco tarjetas reciben callbacks opcionales y todavía no tienen acciones co
 
 ## Fuentes tipográficas
 
-Las tarjetas utilizan el alias `JekoRegular`, registrado con un único archivo `Jeko Regular.ttf`, y peso explícito 400. Esto garantiza la variante Regular aunque los archivos entregados compartan metadatos internos de peso. La cabecera y el saludo conservan `JekoSemiBold`.
+Los 18 archivos de Jeko están en `assets/fonts/` y se registran en `flutter.fonts` de `pubspec.yaml`. Cada variante tiene una familia independiente con un único archivo, siguiendo el patrón de `JekoRegular` y `JekoSemiBold`. Esto permite elegir el archivo concreto aunque varias fuentes entregadas compartan metadatos internos de peso. La familia general `Jeko` conserva sus nueve pesos normales y cursivos para los usos existentes.
 
-Los 19 archivos de Jeko están en `assets/fonts/`, junto a `lib/`, y se registran en la sección `flutter.fonts` de `pubspec.yaml`. Las rutas parten de ese archivo, según la [guía oficial de fuentes de Flutter](https://docs.flutter.dev/cookbook/design/fonts). Esta declaración incluye las fuentes en la aplicación; no es necesario repetirlas en `flutter.assets` ni configurarlas por separado en Android e iOS.
+| Variante | Familia normal | Familia cursiva | Peso |
+| --- | --- | --- | --- |
+| Thin | `JekoThin` | `JekoThinItalic` | 100 |
+| Extra Light | `JekoExtraLight` | `JekoExtraLightItalic` | 200 |
+| Light | `JekoLight` | `JekoLightItalic` | 300 |
+| Regular | `JekoRegular` | `JekoRegularItalic` | 400 |
+| Medium | `JekoMedium` | `JekoMediumItalic` | 500 |
+| Semi Bold | `JekoSemiBold` | `JekoSemiBoldItalic` | 600 |
+| Bold | `JekoBold` | `JekoBoldItalic` | 700 |
+| Extra Bold | `JekoExtraBold` | `JekoExtraBoldItalic` | 800 |
+| Black | `JekoBlack` | `JekoBlackItalic` | 900 |
 
-La familia `Jeko` incluye estos pesos, cada uno con su archivo normal y su cursiva (`FontStyle.italic`):
-
-| Variante | Peso en Flutter |
-| --- | --- |
-| Thin | `FontWeight.w100` |
-| Extra Light | `FontWeight.w200` |
-| Light | `FontWeight.w300` |
-| Regular | `FontWeight.w400` |
-| Medium | `FontWeight.w500` |
-| Semi Bold | `FontWeight.w600` |
-| Bold | `FontWeight.w700` |
-| Extra Bold | `FontWeight.w800` |
-| Black | `FontWeight.w900` |
-
-Para usarla en un widget cuando se implementen las pantallas:
+Las familias cursivas se registran con `style: italic`; para solicitar el estilo y peso correspondientes:
 
 ```dart
 const Text(
   'MeepleWorld',
   style: TextStyle(
-    fontFamily: 'Jeko',
+    fontFamily: 'JekoBoldItalic',
     fontWeight: FontWeight.w700,
     fontStyle: FontStyle.italic,
   ),
 )
 ```
 
-El archivo `Jeko Italic Variable.ttf` se conserva y está disponible mediante `fontFamily: 'JekoItalicVariable'`, con `FontWeight.w400` y `FontStyle.italic`. Aunque su nombre dice «Variable», el archivo entregado no contiene la tabla `fvar` de ejes de variación; se registra como una fuente fija independiente y no admite pesos variables mediante `FontVariation`.
+Las tarjetas usan `JekoRegular`; la cabecera de Inicio y el saludo, `JekoSemiBold`; el título de bienvenida de autenticación usa `JekoBlack`. Los títulos provisionales de las otras secciones conservan la familia general `Jeko`.
 
-Después de modificar el registro, ejecuta `flutter pub get` desde `frontend/` y reinicia por completo la aplicación para cargar las fuentes nuevas. Los títulos provisionales ya utilizan Jeko. Su aplicación al resto de textos y al tema global queda pendiente del diseño.
+Las rutas de las fuentes parten de `pubspec.yaml`; no es necesario repetirlas en `flutter.assets` ni configurarlas por separado en Android e iOS. Después de modificar el registro, ejecuta `flutter pub get` desde `frontend/` y reinicia por completo la aplicación para cargar las familias nuevas. La aplicación de estas variantes al resto de textos y al tema global queda pendiente del diseño.
+
+Verificación del registro del 7 de octubre de 2026: `flutter pub get --offline`, `flutter analyze` y APK debug correctos. El `FontManifest.json` del APK incluye las 18 familias independientes con el archivo, peso y estilo correspondientes y la familia general con sus 18 variantes; todos los archivos de fuente están incluidos. Se revisaron los enlaces locales y `git diff --check`. No se añadieron dependencias ni se modificó el lockfile. La selección visual de todas las variantes e iOS quedan sin verificar en dispositivo.
 
 ## Herramientas
 

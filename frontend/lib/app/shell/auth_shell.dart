@@ -58,9 +58,7 @@ class AuthShell extends StatelessWidget {
             body: SafeArea(
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  final padding = formLayout
-                      ? const EdgeInsets.fromLTRB(34, 16, 34, 24)
-                      : const EdgeInsets.fromLTRB(24, 64, 24, 24);
+                  const padding = EdgeInsets.fromLTRB(24, 24, 24, 24);
                   final Widget content;
 
                   if (formLayout) {

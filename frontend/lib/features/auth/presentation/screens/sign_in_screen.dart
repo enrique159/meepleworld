@@ -103,7 +103,7 @@ class _SignInScreenState extends State<SignInScreen> {
               TextButton(
                 onPressed: _viewModel.busy
                     ? null
-                    : () => context.go(AppRoutes.signUp),
+                    : () => context.push(AppRoutes.signUp),
                 child: const Text('Crear cuenta'),
               ),
             ],

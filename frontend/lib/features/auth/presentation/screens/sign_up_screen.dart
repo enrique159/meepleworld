@@ -93,28 +93,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
               const SizedBox(height: 24),
               Semantics(
                 header: true,
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10),
-                  child: Text(
-                    'Crea tu cuenta',
-                    style: TextStyle(
-                      fontFamily: 'JekoSemiBold',
-                      fontSize: 28,
-                      height: 1.1,
-                    ),
+                child: const Text(
+                  'Crea tu cuenta',
+                  style: TextStyle(
+                    fontFamily: 'JekoSemiBold',
+                    fontSize: 28,
+                    height: 1.1,
                   ),
                 ),
               ),
               const SizedBox(height: 12),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 10),
-                child: Text(
-                  'Vamos a comenzar por tus datos de inicio de sesión',
-                  style: TextStyle(
-                    fontFamily: 'JekoRegular',
-                    fontSize: 16,
-                    height: 1.2,
-                  ),
+              const Text(
+                'Vamos a comenzar por tus datos de inicio de sesión',
+                style: TextStyle(
+                  fontFamily: 'JekoRegular',
+                  fontSize: 16,
+                  height: 1.2,
                 ),
               ),
               const SizedBox(height: 32),
@@ -216,12 +210,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
               ],
               const SizedBox(height: 30),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: AuthPrimaryButton(
-                  label: _viewModel.busy ? 'Creando cuenta…' : 'Siguiente',
-                  onPressed: _viewModel.busy ? null : _submit,
-                ),
+              AuthPrimaryButton(
+                label: _viewModel.busy ? 'Creando cuenta…' : 'Siguiente',
+                onPressed: _viewModel.busy ? null : _submit,
               ),
             ],
           ),
