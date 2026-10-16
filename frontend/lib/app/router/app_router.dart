@@ -85,6 +85,7 @@ GoRouter createAppRouter({
                 key: state.pageKey,
                 disableAnimations: MediaQuery.disableAnimationsOf(context),
                 child: AuthShell(
+                  formLayout: true,
                   child: SignInScreen(
                     createViewModel: () => SignInViewModel(session),
                     initialEmail: result?.email ?? '',
