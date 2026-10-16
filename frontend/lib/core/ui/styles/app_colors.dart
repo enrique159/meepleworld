@@ -6,4 +6,5 @@ abstract final class AppColors {
   static const authGradientStart = Color(0xFF9D40E1);
   static const authAccent = Color(0xFF5F4BD1);
   static const inputPlaceholder = Color(0xFFB6A1D1);
+  static const inputError = Color(0xFFE94378);
 }

@@ -135,8 +135,8 @@ class _SignInScreenState extends State<SignInScreen> {
                 autocorrect: false,
                 autofillHints: const [AutofillHints.username],
                 validator: AuthValidators.email,
+                validationMessages: AuthValidators.emailMessages,
               ),
-              const SizedBox(height: 20),
               GlassTextInput(
                 controller: _password,
                 placeholder: 'Contraseña',
@@ -166,6 +166,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 textInputAction: TextInputAction.done,
                 autofillHints: const [AutofillHints.password],
                 validator: (value) => AuthValidators.password(value),
+                validationMessages: AuthValidators.passwordMessages,
                 onSubmitted: (_) => _submit(),
               ),
               if (_viewModel.errorMessage case final message?) ...[
@@ -178,7 +179,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   ),
                 ),
               ],
-              const SizedBox(height: 30),
+              const SizedBox(height: 10),
               AuthPrimaryButton(
                 label: _viewModel.busy ? 'Iniciando sesión…' : 'Iniciar sesión',
                 onPressed: _viewModel.busy ? null : _submit,

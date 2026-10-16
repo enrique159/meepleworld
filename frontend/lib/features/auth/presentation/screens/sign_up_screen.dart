@@ -126,8 +126,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 textInputAction: TextInputAction.next,
                 autofillHints: const [AutofillHints.name],
                 validator: AuthValidators.displayName,
+                validationMessages: AuthValidators.displayNameMessages,
               ),
-              const SizedBox(height: 20),
               GlassTextInput(
                 controller: _email,
                 placeholder: 'Correo electrónico',
@@ -142,8 +142,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 autocorrect: false,
                 autofillHints: const [AutofillHints.email],
                 validator: AuthValidators.email,
+                validationMessages: AuthValidators.emailMessages,
               ),
-              const SizedBox(height: 20),
               GlassTextInput(
                 controller: _password,
                 placeholder: 'contraseña',
@@ -166,8 +166,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 autofillHints: const [AutofillHints.newPassword],
                 validator: (value) =>
                     AuthValidators.password(value, registering: true),
+                validationMessages: AuthValidators.passwordMessages,
               ),
-              const SizedBox(height: 20),
               GlassTextInput(
                 controller: _confirmation,
                 placeholder: 'Repite contraseña',
@@ -190,13 +190,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 autofillHints: const [AutofillHints.newPassword],
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Repite tu contraseña.';
+                    return AuthValidators.confirmationRequired;
                   }
                   if (value != _password.text) {
-                    return 'Las contraseñas no coinciden.';
+                    return AuthValidators.confirmationMismatch;
                   }
                   return null;
                 },
+                validationMessages: AuthValidators.confirmationMessages,
                 onSubmitted: (_) => _submit(),
               ),
               if (_viewModel.errorMessage case final message?) ...[
@@ -209,7 +210,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                 ),
               ],
-              const SizedBox(height: 30),
+              const SizedBox(height: 10),
               AuthPrimaryButton(
                 label: _viewModel.busy ? 'Creando cuenta…' : 'Siguiente',
                 onPressed: _viewModel.busy ? null : _submit,

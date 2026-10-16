@@ -19,6 +19,7 @@ class GlassTextInput extends StatelessWidget {
     this.textCapitalization = TextCapitalization.none,
     this.autofillHints,
     this.validator,
+    this.validationMessages = const [],
     this.onChanged,
     this.onSubmitted,
     super.key,
@@ -37,8 +38,19 @@ class GlassTextInput extends StatelessWidget {
   final TextCapitalization textCapitalization;
   final Iterable<String>? autofillHints;
   final FormFieldValidator<String>? validator;
+
+  /// Mensajes posibles para reservar su espacio antes de validar.
+  final List<String> validationMessages;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
+
+  static const _errorStyle = TextStyle(
+    color: AppColors.inputError,
+    fontFamily: 'JekoSemiBold',
+    fontSize: 12,
+    fontWeight: FontWeight.w600,
+    height: 1.2,
+  );
 
   @override
   Widget build(BuildContext context) => FormField<String>(
@@ -127,14 +139,28 @@ class GlassTextInput extends StatelessWidget {
             ),
           ),
         ),
-        if (field.errorText case final error?)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(22, 8, 22, 0),
-            child: Semantics(
-              liveRegion: true,
-              child: Text(
-                error,
-                style: const TextStyle(fontFamily: 'JekoRegular', fontSize: 14),
+        if (validator != null)
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 28),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 6),
+              child: Stack(
+                children: [
+                  const SizedBox.shrink(),
+                  // Las medidas se conservan también con texto ampliado.
+                  for (final message in validationMessages)
+                    ExcludeSemantics(
+                      child: Opacity(
+                        opacity: 0,
+                        child: Text(message, style: _errorStyle),
+                      ),
+                    ),
+                  if (field.errorText case final error?)
+                    Semantics(
+                      liveRegion: true,
+                      child: Text(error, style: _errorStyle),
+                    ),
+                ],
               ),
             ),
           ),
